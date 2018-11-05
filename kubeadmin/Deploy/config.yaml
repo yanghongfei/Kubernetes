@@ -26,4 +26,4 @@ apiServerExtraArgs:
   basic-auth-file: /etc/kubernetes/pki/basic_auth_file
 featureGates:
   CoreDNS: true
-imageRepository: "harbor.shinezone.com/shinezonetest"
+imageRepository: "harbor.domain.com/shinezonetest"

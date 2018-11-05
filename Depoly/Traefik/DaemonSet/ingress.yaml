@@ -5,14 +5,14 @@ metadata:
   namespace: default
 spec:
   rules:
-  - host: traefik-nginx.shinezone.com
+  - host: traefik-nginx.domain.com
     http:
       paths:
       - path: /
         backend:
           serviceName: my-nginx
           servicePort: 80
-  - host: traefik-apache.shinezone.com
+  - host: traefik-apache.domain.com
     http:
       paths:
       - path: /

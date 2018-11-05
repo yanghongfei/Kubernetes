@@ -9,5 +9,5 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "/etc/kubernetes/ssl/shinezone.com.crt"
-      keyFile = "/etc/kubernetes/ssl/shinezone.com.key"
+      certFile = "/etc/kubernetes/ssl/domain.com.crt"
+      keyFile = "/etc/kubernetes/ssl/domain.com.key"

@@ -11,14 +11,14 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "/root/ssl/shinezone.com.crt"
-      keyFile = "/root/ssl/shinezone.com.key"
+      certFile = "/root/ssl/domain.com.crt"
+      keyFile = "/root/ssl/domain.com.key"
 	  
 #生成配置字典，需要指定在ingress对应命名空间
 kubectl create configmap traefik-conf --from-file=traefik.toml
 
 #生成保密字典，需要指定在ingress对应命名空间
-kubectl create secret generic traefik-cert --from-file=/root/ssl/shinezone.com.key --from-file=/root/ssl/shinezone.com.crt
+kubectl create secret generic traefik-cert --from-file=/root/ssl/domain.com.key --from-file=/root/ssl/domain.com.crt
 
 
 #daemonset yaml

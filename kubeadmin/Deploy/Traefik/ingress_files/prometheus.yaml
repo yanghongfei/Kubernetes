@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
 spec:
   rules:
-  - host: traefik-prometheus.shinezone.com
+  - host: traefik-prometheus.domain.com
     http:
       paths:
       - path: /

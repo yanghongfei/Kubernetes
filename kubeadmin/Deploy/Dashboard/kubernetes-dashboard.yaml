@@ -116,7 +116,7 @@ spec:
         node-role.kubernetes.io/master: ""
       containers:
       - name: kubernetes-dashboard
-        image: harbor.shinezone.com/shinezonetest/kubernetes-dashboard-amd64:v1.8.3
+        image: harbor.domain.com/shinezonetest/kubernetes-dashboard-amd64:v1.8.3
         resources:
           limits:
             cpu: 0.5

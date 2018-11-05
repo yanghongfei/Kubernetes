@@ -22,7 +22,7 @@ spec:
 #        node-role.kubernetes.io/master: ""
       containers:
       - name: heapster
-        image: harbor.shinezone.com/shinezonetest/heapster-amd64:v1.4.2
+        image: harbor.domain.com/shinezonetest/heapster-amd64:v1.4.2
         imagePullPolicy: IfNotPresent
         command:
         - /heapster

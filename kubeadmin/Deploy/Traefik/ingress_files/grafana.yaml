@@ -5,7 +5,7 @@ metadata:
   namespace: monitoring
 spec:
   rules:
-  - host: traefik-grafana.shinezone.com
+  - host: traefik-grafana.domain.com
     http:
       paths:
       - path: /

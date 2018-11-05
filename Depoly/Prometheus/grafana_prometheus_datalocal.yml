@@ -21,7 +21,7 @@ spec:
         yhf: master01
       containers:
         - name: grafana
-          image: harbor.shinezone.com/shinezonetest/grafana:1.0
+          image: harbor.domain.com/shinezonetest/grafana:1.0
           env:
             - name: GF_AUTH_BASIC_ENABLED
               value: "true"

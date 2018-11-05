@@ -212,8 +212,8 @@ $ sudo systemctl restart docker
 |      ca.pem       |  √   |            |       |         |        |        |
 |     etcd.csr      |  √   |            |       |         |        |        |
 |   etcd-key.pem    |  √   |            |       |         |        |        |
-| shinezone.com.crt |      |            |       |         |        |   √    |
-| shinezone.com.key |      |            |       |         |        |   √    |
+| domain.com.crt |      |            |       |         |        |   √    |
+| domain.com.key |      |            |       |         |        |   √    |
 
 
 
@@ -625,7 +625,7 @@ $ systemctl enable kubelet   //暂不启动，未初始化前启动也会报错
 ```shell
 // 所有机器执行
 $ sed -i s#systemd#cgroupfs#g /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
-$ echo 'Environment="KUBELET_EXTRA_ARGS=--v=2 --fail-swap-on=false --pod-infra-container-image=harbor.shinezone.com/shinezonetest/pause-amd64:3.1"' >>  /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
+$ echo 'Environment="KUBELET_EXTRA_ARGS=--v=2 --fail-swap-on=false --pod-infra-container-image=harbor.domain.com/shinezonetest/pause-amd64:3.1"' >>  /etc/systemd/system/kubelet.service.d/10-kubeadm.conf
 ```
 
 #### 7.2 加载配置文件
@@ -810,7 +810,7 @@ apiServerExtraArgs:
   basic-auth-file: /etc/kubernetes/pki/basic_auth_file
 featureGates:
   CoreDNS: true
-imageRepository: "harbor.shinezone.com/shinezonetest"
+imageRepository: "harbor.domain.com/shinezonetest"
 EOF
 ```
 
@@ -913,9 +913,9 @@ $ wget  https://docs.projectcalico.org/v3.1/getting-started/kubernetes/installat
 #修改calico.yaml里image镜像路径部分,已推内网harbor
 $ grep image calico.yaml 
 
-        - image: harbor.shinezone.com/shinezonetest/calico-typha:1.0
-          image: harbor.shinezone.com/shinezonetest/calico-node:1.0
-          image: harbor.shinezone.com/shinezonetest/calico-cni:1.0
+        - image: harbor.domain.com/shinezonetest/calico-typha:1.0
+          image: harbor.domain.com/shinezonetest/calico-node:1.0
+          image: harbor.domain.com/shinezonetest/calico-cni:1.0
           
 $ kubectl apply -f rbac-kdd.yaml
 $ kubectl apply -f calico.yaml
@@ -1095,7 +1095,7 @@ spec:
     spec:
       containers:
       - name: kubernetes-dashboard
-        image: harbor.shinezone.com/shinezonetest/kubernetes-dashboard-amd64:v1.8.3
+        image: harbor.domain.com/shinezonetest/kubernetes-dashboard-amd64:v1.8.3
         ports:
         - containerPort: 8443
           protocol: TCP
@@ -1261,7 +1261,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: k8s-traefik.shinezone.com
+  - host: k8s-traefik.domain.com
     http:
       paths:
       - backend:
@@ -1373,14 +1373,14 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "/root/ssl/shinezone.com.crt"
-      keyFile = "/root/ssl/shinezone.com.key"
+      certFile = "/root/ssl/domain.com.crt"
+      keyFile = "/root/ssl/domain.com.key"
 EOF
 ```
 
 ```shell
 $ kubectl create configmap traefik-conf --from-file=traefik.toml    //生成配置字典
-$ kubectl create secret generic traefik-cert --from-file=/etc/kubernetes/ssl/shinezone.com.key --from-file=/etc/kubernetes/ssl/shinezone.com.crt                    //生成保密字典
+$ kubectl create secret generic traefik-cert --from-file=/etc/kubernetes/ssl/domain.com.key --from-file=/etc/kubernetes/ssl/domain.com.crt                    //生成保密字典
 ```
 
 #### 12.2 部署Traefik
@@ -1494,7 +1494,7 @@ apiServerExtraArgs:
   basic-auth-file: /etc/kubernetes/pki/basic_auth_file
 featureGates:
   CoreDNS: true
-imageRepository: "harbor.shinezone.com/shinezonetest"
+imageRepository: "harbor.domain.com/shinezonetest"
 ```
 
 > 打开kubernetes-dashboard.yaml中的  “- --authentication-mode=basic ”注释

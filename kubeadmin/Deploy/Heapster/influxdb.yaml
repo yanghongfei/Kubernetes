@@ -15,7 +15,7 @@ spec:
 #        node-role.kubernetes.io/master: ""
       containers:
       - name: influxdb
-        image: harbor.shinezone.com/shinezonetest/heapster-influxdb-amd64:v1.3.3
+        image: harbor.domain.com/shinezonetest/heapster-influxdb-amd64:v1.3.3
         imagePullPolicy: IfNotPresent
         volumeMounts:
         - mountPath: /data

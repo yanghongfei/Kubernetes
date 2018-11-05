@@ -19,7 +19,7 @@ metadata:
   namespace: kube-system
 spec:
   rules:
-  - host: traefik-ui.shinezone.com
+  - host: traefik-ui.domain.com
     http:
       paths:
       - path: /

@@ -19,7 +19,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: k8s-traefik.shinezone.com
+  - host: k8s-traefik.domain.com
     http:
       paths:
       - backend:

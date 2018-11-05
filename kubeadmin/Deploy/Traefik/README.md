@@ -67,7 +67,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: k8s-traefik.shinezone.com
+  - host: k8s-traefik.domain.com
     http:
       paths:
       - backend:
@@ -179,14 +179,14 @@ defaultEntryPoints = ["http", "https"]
   address = ":443"
     [entryPoints.https.tls]
       [[entryPoints.https.tls.certificates]]
-      certFile = "/root/ssl/shinezone.com.crt"
-      keyFile = "/root/ssl/shinezone.com.key"
+      certFile = "/root/ssl/domain.com.crt"
+      keyFile = "/root/ssl/domain.com.key"
 EOF
 ```
 
 ```shell
 $ kubectl create configmap traefik-conf --from-file=traefik.toml    //生成配置字典
-$ kubectl create secret generic traefik-cert --from-file=/etc/kubernetes/ssl/shinezone.com.key --from-file=/etc/kubernetes/ssl/shinezone.com.crt                    //生成保密字典
+$ kubectl create secret generic traefik-cert --from-file=/etc/kubernetes/ssl/domain.com.key --from-file=/etc/kubernetes/ssl/domain.com.crt                    //生成保密字典
 ```
 
 #### 12.2 部署Traefik

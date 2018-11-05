@@ -108,7 +108,7 @@ spec:
       serviceAccountName: calico-node
       containers:
       #- image: quay.io/calico/typha:v0.7.2
-      - image: harbor.shinezone.com/shinezonetest/calico-typha:1.0
+      - image: harbor.domain.com/shinezonetest/calico-typha:1.0
         name: calico-typha
         ports:
         - containerPort: 5473
@@ -200,7 +200,7 @@ spec:
         # host.
         - name: calico-node
          # image: quay.io/calico/node:v3.1.1
-          image: harbor.shinezone.com/shinezonetest/calico-node:1.0
+          image: harbor.domain.com/shinezonetest/calico-node:1.0
           env:
             # Use Kubernetes API as the backing datastore.
             - name: DATASTORE_TYPE
@@ -284,7 +284,7 @@ spec:
         # and CNI network config file on each node.
         - name: install-cni
           #image: quay.io/calico/cni:v3.1.1
-          image: harbor.shinezone.com/shinezonetest/calico-cni:1.0
+          image: harbor.domain.com/shinezonetest/calico-cni:1.0
           command: ["/install-cni.sh"]
           env:
             # Name of the CNI config file to create.

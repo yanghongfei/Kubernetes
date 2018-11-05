@@ -15,7 +15,7 @@ spec:
         node-role.kubernetes.io/master: ""
       containers:
       - name: grafana
-        image: harbor.shinezone.com/shinezonetest/heapster-grafana-amd64:v4.4.3
+        image: harbor.domain.com/shinezonetest/heapster-grafana-amd64:v4.4.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 3000

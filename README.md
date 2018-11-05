@@ -169,8 +169,8 @@ go version go1.10.1 linux/amd64
 |   admin-key.pem    |      |            |       |    √    |          |        |
 |    flanneld.pem    |      |            |       |         |    √     |        |
 |  flanneld-key.pem  |      |            |       |         |    √     |        |
-| shinezone.com.crt  |      |            |       |         |          |   √    |
-| shinezone.com.key  |      |            |       |         |          |   √    |
+| domain.com.crt  |      |            |       |         |          |   √    |
+| domain.com.key  |      |            |       |         |          |   √    |
 
 
 
@@ -2767,14 +2767,14 @@ metadata:
   namespace: default
 spec:
   rules:
-  - host: traefik-nginx.shinezone.com
+  - host: traefik-nginx.domain.com
     http:
       paths:
       - path: /
         backend:
           serviceName: my-nginx
           servicePort: 80
-  - host: traefik-apache.shinezone.com
+  - host: traefik-apache.domain.com
     http:
       paths:
       - path: /
@@ -2801,7 +2801,7 @@ spec:
     spec:
       containers:
       - name: my-apache
-        image: harbor.shinezone.com/shinezonetest/nginx:latest 
+        image: harbor.domain.com/shinezonetest/nginx:latest 
         ports:
         - containerPort: 80
 
@@ -2838,7 +2838,7 @@ spec:
     spec:
       containers:
       - name: my-apache
-        image: harbor.shinezone.com/shinezonetest/httpd:latest
+        image: harbor.domain.com/shinezonetest/httpd:latest
         ports:
         - containerPort: 80
 
@@ -2886,10 +2886,10 @@ OK，此时看到Traefik已经running了，说明：80 对应的服务端口，8
 我的网站主页是被我修改过的，登陆修改命令：`kubectl exec -ti  my-nginx-7d74dd5487-htjps -n default bash`
 
 ```
-$ curl Host:traefik-apache.shinezone.com http://172.30.33.6:80
+$ curl Host:traefik-apache.domain.com http://172.30.33.6:80
 This is Apache Web
 
-$ curl Host:traefik-nginx.shinezone.com http://172.30.59.6:80
+$ curl Host:traefik-nginx.domain.com http://172.30.59.6:80
 This is Nginx Web
 ```
 
@@ -2897,8 +2897,8 @@ This is Nginx Web
 
 ```
 $ cat /etc/hosts   #nodeIP随便绑定，DaemonSet模式，后续也会将nodeip负载起来
-10.10.10.132 traefik-nginx.shinezone.com
-10.10.10.131 traefik-apache.shinezone.com
+10.10.10.132 traefik-nginx.domain.com
+10.10.10.131 traefik-apache.domain.com
 ```
 
 ![nginx](./images/nginx.png)
@@ -3052,7 +3052,7 @@ OK，此时看到Traefik已经running了，并且启动了80，8080端口，80 �
 
 初次访问，可以看到dashboard什么都没，因为我们还没配置规则，下一步进行安装UI界面
 
-创建之前，我这修改了yaml中，host字段域名：`host: traefik-ui.shinezone.com`
+创建之前，我这修改了yaml中，host字段域名：`host: traefik-ui.domain.com`
 
 **ui.yaml**文件内容
 
@@ -3078,7 +3078,7 @@ metadata:
   namespace: kube-system
 spec:
   rules:
-  - host: traefik-ui.shinezone.com
+  - host: traefik-ui.domain.com
     http:
       paths:
       - path: /
@@ -3099,7 +3099,7 @@ kube-system   traefik-web-ui            ClusterIP   10.254.163.57    <none>     
 
 可以看到这个启动是很快的，这时候我们饭回来看我们`http://10.10.10.130:32719/dashboard/`界面
 
-如下图，可以看到没有刷新，用户无感知的就直接识别到了`host: traefik-ui.shinezone.com ` ![traefik-ui](./images/traefik-ui.png)
+如下图，可以看到没有刷新，用户无感知的就直接识别到了`host: traefik-ui.domain.com ` ![traefik-ui](./images/traefik-ui.png)
 
 
 
@@ -3108,7 +3108,7 @@ traetfik-web-ui测试
 上文中创建ui.yaml配置文件，里面有一段是这样子的
 
 ```
-  - host: traefik-ui.shinezone.com
+  - host: traefik-ui.domain.com
     http:
       paths:
       - path: /
@@ -3125,7 +3125,7 @@ traetfik-web-ui测试
 
 ![traefik_wrr](C:\Users\Administrator\Dropbox\运维服务\kubernetes\images\traefik_wrr.png)
 
-最后，说了上面那么多的实现方式，也讲了那么多用户无感知，肯定是要测试的，记得上问中有说到我这个`http://traefik-ui.shinezone.com` 这个域名对应的`ServerName`是`traefik-web-ui`可以通过` kubectl get svc  --all-namespaces  |grep traefik-web-ui`查看到，`traefik-web-ui`Service就是Traefik的UI
+最后，说了上面那么多的实现方式，也讲了那么多用户无感知，肯定是要测试的，记得上问中有说到我这个`http://traefik-ui.domain.com` 这个域名对应的`ServerName`是`traefik-web-ui`可以通过` kubectl get svc  --all-namespaces  |grep traefik-web-ui`查看到，`traefik-web-ui`Service就是Traefik的UI
 
 接下来我们来访问下这个域名，因为外层没有DNS，我测试机器先绑定本地`/etc/hosts`
 
@@ -3134,12 +3134,12 @@ traetfik-web-ui测试
 ```
 Linux实例，Windows本地hosts写法一样
 $ cat /etc/hosts
-10.10.10.130 traefik-ui.shinezone.com
-#或者 10.10.10.131 traefik-ui.shinezone.com
-#或者 10.10.10.132 traefik-ui.shinezone.com
+10.10.10.130 traefik-ui.domain.com
+#或者 10.10.10.131 traefik-ui.domain.com
+#或者 10.10.10.132 traefik-ui.domain.com
 ```
 
-访问域名+NodePort：`http://traefik-ui.shinezone.com`
+访问域名+NodePort：`http://traefik-ui.domain.com`
 
 ![traefik-shinezone](./\images\traefik-shinezone.png)
 
@@ -3169,7 +3169,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-  - host: kubernetes-ui.shinezone.com
+  - host: kubernetes-ui.domain.com
     http:
       paths:
       - path: /  
@@ -3184,16 +3184,16 @@ spec:
 $ kubectl create -f  kubernetes-dashboard-traefik.yaml
 $ kubectl get ingress --all-namespaces
 NAMESPACE     NAME                           HOSTS                         ADDRESS   PORTS     AGE
-kube-system   kubernetes-dashboard-traefik   kubernetes-ui.shinezone.com             80        9m
-kube-system   traefik-web-ui                 traefik-ui.shinezone.com                80        3h
+kube-system   kubernetes-dashboard-traefik   kubernetes-ui.domain.com             80        9m
+kube-system   traefik-web-ui                 traefik-ui.domain.com                80        3h
 ```
 
 - 4.绑定hosts域名，测试
 
 ```
 $ cat /etc/hosts
-10.10.10.132 traefik-ui.shinezone.com
-10.10.10.130 kubernetes-ui.shinezone.com
+10.10.10.132 traefik-ui.domain.com
+10.10.10.130 kubernetes-ui.domain.com
 ```
 
  可以看到traefik ingress快速展示了出来![k8s-traefik](./\images\k8s-traefik.png)
@@ -3202,7 +3202,7 @@ $ cat /etc/hosts
 
 注：这次我们配置文件转发的时候只转发到`/`下，所以说访问的时候要加上全路径：
 
-`https://kubernetes-ui.shinezone.com:6443/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/` 
+`https://kubernetes-ui.domain.com:6443/api/v1/namespaces/kube-system/services/kubernetes-dashboard/proxy/` 
 
 ![k8s-ui](./\images\k8s-ui.png)
 
@@ -3210,7 +3210,7 @@ $ cat /etc/hosts
 
 ```
 $ cat /ets/hosts  #把130改成131 访问测试
-10.10.10.131 kubernetes-ui.shinezone.com
+10.10.10.131 kubernetes-ui.domain.com
 ```
 
  这里看到不能访问是正常的（想要每个node都访问就必须将副本增加，让之分布到每个node节点）![error_k8s-ui](C:\Users\Administrator\Dropbox\运维服务\kubernetes\images\error_k8s-ui.png)
@@ -3864,7 +3864,7 @@ spec:
     spec:
       containers:
         - name: grafana
-          image: harbor.shinezone.com/shinezonetest/grafana:1.0
+          image: harbor.domain.com/shinezonetest/grafana:1.0
           env:
             - name: GF_AUTH_BASIC_ENABLED
               value: "true"
