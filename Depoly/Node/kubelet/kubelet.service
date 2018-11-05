@@ -1,0 +1,22 @@
+[Unit]
+Description=Kubernetes Kubelet
+After=docker.service
+Requires=docker.service
+
+[Service]
+EnvironmentFile=-/opt/kubernetes/cfg/kubelet
+ExecStart=/opt/kubernetes/bin/kubelet       ${KUBE_LOGTOSTDERR}     \
+                    ${KUBE_LOG_LEVEL}       \
+                    ${NODE_ADDRESS}         \
+                    ${NODE_PORT}            \
+                    ${NODE_HOSTNAME}        \
+                    ${KUBELET_KUBECONFIG}   \
+                    ${KUBE_ALLOW_PRIV}      \
+                    ${KUBELET__DNS_IP}      \
+                    ${KUBELET_DNS_DOMAIN}   \
+                    $KUBELET_ARGS
+Restart=on-failure
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

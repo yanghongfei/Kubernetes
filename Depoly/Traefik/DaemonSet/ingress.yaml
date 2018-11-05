@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-ingress
+  namespace: default
+spec:
+  rules:
+  - host: traefik-nginx.shinezone.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: my-nginx
+          servicePort: 80
+  - host: traefik-apache.shinezone.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: my-apache
+          servicePort: 80

@@ -1,0 +1,108 @@
+
+[root@OPS-SZNW-K8S01-Master01 ~/Traefik]#cat traefik.toml 
+defaultEntryPoints = ["http", "https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+    entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+      [[entryPoints.https.tls.certificates]]
+      certFile = "/root/ssl/shinezone.com.crt"
+      keyFile = "/root/ssl/shinezone.com.key"
+	  
+#生成配置字典，需要指定在ingress对应命名空间
+kubectl create configmap traefik-conf --from-file=traefik.toml
+
+#生成保密字典，需要指定在ingress对应命名空间
+kubectl create secret generic traefik-cert --from-file=/root/ssl/shinezone.com.key --from-file=/root/ssl/shinezone.com.crt
+
+
+#daemonset yaml
+[root@OPS-SZNW-K8S01-Master01 ~/Traefik]#cat traefik-ds.yaml
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik-ingress-controller
+  namespace: default
+---
+kind: DaemonSet
+apiVersion: extensions/v1beta1
+metadata:
+  name: traefik-ingress-controller
+  namespace: default
+  labels:
+    k8s-app: traefik-ingress-lb
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: traefik-ingress-lb
+        name: traefik-ingress-lb
+    spec:
+      serviceAccountName: traefik-ingress-controller
+      terminationGracePeriodSeconds: 60
+      hostNetwork: true
+      restartPolicy: Always
+      volumes:
+      - name: ssl
+        secret:
+          secretName: traefik-cert
+      - name: config
+        configMap:
+          name: traefik-conf
+      containers:
+      - image: traefik
+        name: traefik-ingress-lb
+        volumeMounts:
+        - mountPath: "/root/ssl"
+          name: "ssl"
+        - mountPath: "/root/Traefik"
+          name: "config"
+        resources:
+          limits:
+            cpu: 200m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        ports:
+        - name: http
+          containerPort: 80
+          hostPort: 80
+        - name: admin
+          containerPort: 8080
+        - name: https
+          containerPort: 443
+          hostPort: 443
+        securityContext:
+          privileged: true
+        args:
+        - --api
+        - --kubernetes
+        - --logLevel=INFO
+        - --configfile=/root/Traefik/traefik.toml
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: traefik-ingress-service
+  namespace: default
+spec:
+  selector:
+    k8s-app: traefik-ingress-lb
+  ports:
+    - protocol: TCP
+      port: 80
+      name: http
+    - protocol: TCP
+      port: 443
+      name: https
+    - protocol: TCP
+      port: 8080
+      name: admin
+  type: NodePort

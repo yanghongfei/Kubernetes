@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: my-apache
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run : my-apache
+    spec:
+      containers:
+      - name: my-apache
+        image: harbor.shinezone.com/shinezonetest/httpd:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /usr/local/apache2/logs
+          name: httpd-logs
+      volumes:
+        - name: httpd-logs
+          hostPath:
+            path: "/data/logs/httpd"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-apache
+  labels:
+    run: my-apache
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+  selector:
+    run: my-apache
