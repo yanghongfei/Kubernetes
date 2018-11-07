@@ -1,71 +1,61 @@
-
-## 目录
 Table of Contents
 =================
 
-         * [基于CentOS 7.4 部署Kubernetes1.10集群](#基于centos-74-部署kubernetes110集群)
-         * [修订记录](#修订记录)
-         * [01. 部署目的](#01-部署目的)
-            * [1.1 Kubernetes的特性](#11-kubernetes的特性)
-         * [02. 环境说明](#02-环境说明)
-            * [2.1 集群说明](#21-集群说明)
-         * [03. K8S集群名词说明](#03-k8s集群名词说明)
-            * [3.1 Kubernetes](#31-kubernetes)
-            * [3.2 Docker](#32-docker)
-            * [3.3 Etcd](#33-etcd)
-            * [3.4 Flannel](#34-flannel)
-         * [04. 开始部署Kubernetes集群](#04-开始部署kubernetes集群)
-            * [4.1 安装前准备](#41-安装前准备)
-            * [4.2 安装Docker-CE](#42-安装docker-ce)
-            * [4.3 关闭Selinux](#43-关闭selinux)
-            * [4.4 下载Kubernetes 1.10软件包](#44-下载kubernetes-110软件包)
-            * [4.5 安装Go](#45-安装go)
-         * [05. 生成TLS证书和秘钥](#05-生成tls证书和秘钥)
-            * [5.1 Kubernetes 集群所需证书](#51-kubernetes-集群所需证书)
-            * [5.2 二进制安装CFSSL](#52-二进制安装cfssl)
-            * [5.3 创建CA证书](#53-创建ca证书)
-            * [5.4 创建 CA 证书签名请求](#54-创建-ca-证书签名请求)
-            * [5.5 生成 CA 证书和私钥](#55-生成-ca-证书和私钥)
-            * [5.6 创建 kubernetes 证书](#56-创建-kubernetes-证书)
-            * [5.7 生成 kubernetes 证书和私钥](#57-生成-kubernetes-证书和私钥)
-            * [5.8 创建admin证书](#58-创建admin证书)
-            * [5.9 生成admin证书和秘钥](#59-生成admin证书和秘钥)
-            * [5.10 创建kube-proxy证书](#510-创建kube-proxy证书)
-            * [5.11 分发证书](#511-分发证书)
-         * [06. 安装kubectl命令行工具](#06-安装kubectl命令行工具)
-            * [6.1 安装kubectl](#61-安装kubectl)
-            * [6.2 创建kubectl kubeconfig文件](#62-创建kubectl-kubeconfig文件)
-            * [6.3 创建TLS Bootstrapping Token](#63-创建tls-bootstrapping-token)
-            * [6.4 创建 kubelet bootstrapping kubeconfig 文件](#64-创建-kubelet-bootstrapping-kubeconfig-文件)
-            * [6.5 创建 kube-proxy kubeconfig 文件](#65-创建-kube-proxy-kubeconfig-文件)
-            * [6.6 分发Kubeconfig文件](#66-分发kubeconfig文件)
-         * [07. 创建高可用etcd集群](#07-创建高可用etcd集群)
-            * [7.1 创建etcd的systemd unit文件](#71-创建etcd的systemd-unit文件)
-            * [7.2 创建环境配置文件](#72-创建环境配置文件)
-            * [7.3 启动etcd集群服务](#73-启动etcd集群服务)
-            * [7.4 验证etcd服务正常](#74-验证etcd服务正常)
-         * [08. 部署Master节点](#08-部署master节点)
-            * [8.1 Master节点包含组件](#81-master节点包含组件)
-            * [8.2 获取最新的二进制文件](#82-获取最新的二进制文件)
-            * [8.3 Kube-apiserver配置和启动](#83-kube-apiserver配置和启动)
-            * [8.4 创建/etc/kubernetes/config文件](#84-创建etckubernetesconfig文件)
-            * [8.5 创建/etc/kubernetes/apiserver配置文件](#85-创建etckubernetesapiserver配置文件)
-            * [8.6 启动apiserver](#86-启动apiserver)
-            * [8.7 kube-controller-manager配置和启动](#87-kube-controller-manager配置和启动)
-            * [8.8 启动kube-controller-manager](#88-启动kube-controller-manager)
-            * [8.9 配置和启动kube-scheduler](#89-配置和启动kube-scheduler)
-            * [8.10 启动kube-scheduler](#810-启动kube-scheduler)
-         * [09. 安装Flannel网络插件](#09-安装flannel网络插件)
-            * [9.1 yum安装Flanenel插件](#91-yum安装flanenel插件)
-            * [9.2 创建flannel启动配置文件](#92-创建flannel启动配置文件)
-            * [9.3 创建flannel config文件](#93-创建flannel-config文件)
-            * [9.4 在etcd中创建网络（VPC)](#94-在etcd中创建网络vpc)
-            * [9.5 启动Flannel](#95-启动flannel)
-            * [9.6 查看flannel网段信息](#96-查看flannel网段信息)
-            * [9.7 启动docker](#97-启动docker)
-            * [9.8 Docker Services配置文件](#98-docker-services配置文件)
-            * [9.9 测试各Node节点网络连通性](#99-测试各node节点网络连通性)
-            * [9.10 关于Flannel启动相关问题记录](#910-关于flannel启动相关问题记录)
+   * [基于CentOS 7.4 部署Kubernetes1.10集群](#基于centos-74-部署kubernetes110集群)
+      * [修订记录](#修订记录)
+      * [01. 部署目的](#01-部署目的)
+         * [1.1 Kubernetes的特性](#11-kubernetes的特性)
+      * [02. 环境说明](#02-环境说明)
+         * [2.1 集群说明](#21-集群说明)
+      * [03. K8S集群名词说明](#03-k8s集群名词说明)
+         * [3.1 Kubernetes](#31-kubernetes)
+         * [3.2 Docker](#32-docker)
+         * [3.3 Etcd](#33-etcd)
+         * [3.4 Flannel](#34-flannel)
+      * [04. 开始部署Kubernetes集群](#04-开始部署kubernetes集群)
+         * [4.1 安装前准备](#41-安装前准备)
+         * [4.2 安装Docker-CE](#42-安装docker-ce)
+         * [4.3 关闭Selinux](#43-关闭selinux)
+         * [4.4 下载Kubernetes 1.10软件包](#44-下载kubernetes-110软件包)
+         * [4.5 安装Go](#45-安装go)
+      * [05. 生成TLS证书和秘钥](#05-生成tls证书和秘钥)
+         * [5.1 Kubernetes 集群所需证书](#51-kubernetes-集群所需证书)
+   * [根据config.json文件的格式创建如下的ca-config.json文件](#根据configjson文件的格式创建如下的ca-configjson文件)
+   * [过期时间设置成了 87600h](#过期时间设置成了-87600h)
+      * [06. 安装kubectl命令行工具](#06-安装kubectl命令行工具)
+         * [6.1 安装kubectl](#61-安装kubectl)
+         * [6.2 创建kubectl kubeconfig文件](#62-创建kubectl-kubeconfig文件)
+         * [6.3 创建TLS Bootstrapping Token](#63-创建tls-bootstrapping-token)
+         * [6.4 创建 kubelet bootstrapping kubeconfig 文件](#64-创建-kubelet-bootstrapping-kubeconfig-文件)
+         * [6.5 创建 kube-proxy kubeconfig 文件](#65-创建-kube-proxy-kubeconfig-文件)
+         * [6.6 分发Kubeconfig文件](#66-分发kubeconfig文件)
+      * [07. 创建高可用etcd集群](#07-创建高可用etcd集群)
+         * [7.1 创建etcd的systemd unit文件](#71-创建etcd的systemd-unit文件)
+         * [7.2 创建环境配置文件](#72-创建环境配置文件)
+         * [7.3 启动etcd集群服务](#73-启动etcd集群服务)
+         * [7.4 验证etcd服务正常](#74-验证etcd服务正常)
+      * [08. 部署Master节点](#08-部署master节点)
+         * [8.1 Master节点包含组件](#81-master节点包含组件)
+         * [8.2 获取最新的二进制文件](#82-获取最新的二进制文件)
+         * [8.3 Kube-apiserver配置和启动](#83-kube-apiserver配置和启动)
+         * [8.4 创建/etc/kubernetes/config文件](#84-创建etckubernetesconfig文件)
+         * [8.5 创建/etc/kubernetes/apiserver配置文件](#85-创建etckubernetesapiserver配置文件)
+   * [The following values are used to configure the kubernetes controller-manager](#the-following-values-are-used-to-configure-the-kubernetes-controller-manager)
+   * [defaults from config and apiserver should be adequate](#defaults-from-config-and-apiserver-should-be-adequate)
+   * [Add your own!](#add-your-own)
+         * [8.9 配置和启动kube-scheduler](#89-配置和启动kube-scheduler)
+         * [8.10 启动kube-scheduler](#810-启动kube-scheduler)
+      * [09. 安装Flannel网络插件](#09-安装flannel网络插件)
+         * [9.1 yum安装Flanenel插件](#91-yum安装flanenel插件)
+         * [9.2 创建flannel启动配置文件](#92-创建flannel启动配置文件)
+         * [9.3 创建flannel config文件](#93-创建flannel-config文件)
+         * [9.4 在etcd中创建网络（VPC)](#94-在etcd中创建网络vpc)
+         * [9.5 启动Flannel](#95-启动flannel)
+         * [9.6 查看flannel网段信息](#96-查看flannel网段信息)
+         * [9.7 启动docker](#97-启动docker)
+         * [9.8 Docker Services配置文件](#98-docker-services配置文件)
+         * [9.9 测试各Node节点网络连通性](#99-测试各node节点网络连通性)
+         * [9.10 关于Flannel启动相关问题记录](#910-关于flannel启动相关问题记录)
          * [10. 部署Node节点](#10-部署node节点)
             * [10.1 部署Node前首先要确认](#101-部署node前首先要确认)
             * [10.2 安装和配置kubelet](#102-安装和配置kubelet)
@@ -132,18 +122,16 @@ Table of Contents
             * [20.5 Prometheus-grafana监控展示，正则匹配问题](#205-prometheus-grafana监控展示正则匹配问题)
             * [20.6 Prometheus Alert Rules更改及Update加载](#206-prometheus-alert-rules更改及update加载)
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 
 
-
-###                                    基于CentOS 7.4 部署Kubernetes1.10集群 
+#                                    基于CentOS 7.4 部署Kubernetes1.10集群 
 
 
 - `kubeadmin`目录为kuadmin安装文档，K8S版本迭代太快，文档只做参考，不敢保证能完整搭建下来。
 
-### 修订记录
+## 修订记录
 
 |    Data    |   Author    | Type |       Content        | Version |
 | :--------: | :---------: | :--: | :------------------: | :-----: |
@@ -175,9 +163,9 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 
-### 01. 部署目的
+## 01. 部署目的
 
-#### 1.1 Kubernetes的特性
+### 1.1 Kubernetes的特性
 
 - 分布式部署
 - 服务发现
@@ -195,7 +183,7 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 
-### 02. 环境说明
+## 02. 环境说明
 
 - 三台机器进行实验K8S v1.10集群环境，其中etcd node为三台复用
 - Kubernetes中所有数据都是存储在etcd中的，etcd必须高可用集群
@@ -209,7 +197,7 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 | CentOS Linux release 7.4.1708 |   Node02/Etcd    | 10.10.10.132 |
 | CentOS Linux release 7.4.1708 |      Harbor      | 172.16.0.181 |
 
-#### 2.1 集群说明
+### 2.1 集群说明
 
 |    Software     | Version |
 | :-------------: | :-----: |
@@ -223,35 +211,35 @@ Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc)
 
 
 
-### 03. K8S集群名词说明
+## 03. K8S集群名词说明
 
-#### 3.1 Kubernetes
+### 3.1 Kubernetes
 
 Kubernetes 是 Google 团队发起并维护的基于Docker的开源容器集群管理系统，它不仅支持常见的云平台，而且支持内部数据中心。
 
 建于 Docker 之上的 Kubernetes 可以构建一个容器的调度服务，其目的是让用户透过Kubernetes集群来进行云端容器集群的管理，而无需用户进行复杂的设置工作。系统会自动选取合适的工作节点来执行具体的容器集群调度处理工作。其核心概念是Container Pod（容器仓）。一个Pod是有一组工作于同一物理工作节点的容器构成的。这些组容器拥有相同的网络命名空间/IP以及存储配额，可以根据实际情况对每一个Pod进行端口映射。此外，Kubernetes工作节点会由主系统进行管理，节点包含了能够运行Docker容器所用到的服务。
 
-####  3.2 Docker
+###  3.2 Docker
 
 Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。开发者在笔记本上编译测试通过的容器可以批量地在生产环境中部署，包括VMs（虚拟机）、bare metal、OpenStack 集群和其他的基础应用平台。
 
-####  3.3 Etcd
+###  3.3 Etcd
 
 ETCD是用于共享配置和服务发现的分布式，一致性的KV存储系统。
 
-#### 3.4 Flannel
+### 3.4 Flannel
 
 Flannel 是CoreOS 下面的一个项目，目前被使用在 kubernetes 中，用于解决 docker 容器直接跨主机的通信问题
 
 
 
-### 04. 开始部署Kubernetes集群
+## 04. 开始部署Kubernetes集群
 
-#### 4.1 安装前准备
+### 4.1 安装前准备
 
 截至2018年04月，Kubernetes目前文档版本：v1.10  官方版本迭代很快，我们选择目前文档版本搭建
 
-#### 4.2 安装Docker-CE
+### 4.2 安装Docker-CE
 
 ```shell
 wget https://download.docker.com/linux/centos/7/x86_64/stable/Packages/docker-ce-selinux-17.03.2.ce-1.el7.centos.noarch.rpm
@@ -260,7 +248,7 @@ yum install docker-ce-selinux-17.03.2.ce-1.el7.centos.noarch.rpm
 yum install docker-ce-17.03.2.ce-1.el7.centos.x86_64.rpm 
 ```
 
-#### 4.3 关闭Selinux
+### 4.3 关闭Selinux
 
 ```shell
 修改/etc/selinux/config文件中设置SELINUX=disabled
@@ -269,7 +257,7 @@ $ setenforce 0
 $ iptables -P FORWARD ACCEPT
 ```
 
-#### 4.4 下载Kubernetes 1.10软件包
+### 4.4 下载Kubernetes 1.10软件包
 
 这里特别说明下，Kubernetes的官方Server二进制包包含了所有组件及脚本，后续服务都会逐个使用到，这里先下载准备好放在`/root` ，千万注意服务版本不要搞错，因为有些新版本参数已经改了很多。
 
@@ -280,21 +268,21 @@ wget https://dl.k8s.io/v1.10.0/kubernetes-client-linux-amd64.tar.gz
 wget https://dl.k8s.io/v1.10.0/kubernetes-server-linux-amd64.tar.gz
 ```
 
-#### 4.5 安装Go
+### 4.5 安装Go
 
-````shell
+```shell
 wget https://dl.google.com/go/go1.10.1.linux-amd64.tar.gz
 tar -C /usr/local -xzf go1.10.1.linux-amd64.tar.gz
 export PATH=$PATH:/usr/local/go/bin
 go version
 go version go1.10.1 linux/amd64
-````
+```
 
 
 
-### 05. 生成TLS证书和秘钥
+## 05. 生成TLS证书和秘钥
 
-#### 5.1 Kubernetes 集群所需证书
+### 5.1 Kubernetes 集群所需证书
 
 |       CA&Key       | etcd | api-server | proxy | kebectl | flanneld | harbor |
 | :----------------: | :--: | :--------: | :---: | :-----: | :------: | :----: |
@@ -314,8 +302,8 @@ go version go1.10.1 linux/amd64
 | domain.com.key  |      |            |       |         |          |   √    |
 
 
-
-#### 5.2 二进制安装CFSSL
+```
+### 5.2 二进制安装CFSSL
 
 ```
 wget https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
@@ -333,7 +321,7 @@ mv cfssl-certinfo_linux-amd64 /usr/local/bin/cfssl-certinfo
 export PATH=/usr/local/bin:$PATH
 ```
 
-#### 5.3 创建CA证书
+### 5.3 创建CA证书
 
 ```
 mkdir /root/ssl
@@ -371,7 +359,7 @@ EOF
 - `server auth`：表示client可以用该 CA 对server提供的证书进行验证；
 - `client auth`：表示server可以用该CA对client提供的证书进行验证；
 
-#### 5.4 创建 CA 证书签名请求
+### 5.4 创建 CA 证书签名请求
 
 创建 `ca-csr.json` 文件，内容如下：
 
@@ -403,7 +391,7 @@ vim ca-csr.json
 - "O"：`Organization`，kube-apiserver 从证书中提取该字段作为请求用户所属的组 (Group)；
 
 
-#### 5.5 生成 CA 证书和私钥
+### 5.5 生成 CA 证书和私钥
 
 ```
 cd /root/ssl
@@ -414,7 +402,7 @@ ca-config.json  ca.csr  ca-csr.json  ca-key.pem  ca.pem
 
 
 
-#### 5.6 创建 kubernetes 证书
+### 5.6 创建 kubernetes 证书
 
 创建 kubernetes 证书签名请求文件 `kubernetes-csr.json`：
 
@@ -455,7 +443,7 @@ ca-config.json  ca.csr  ca-csr.json  ca-key.pem  ca.pem
 - 如果 hosts 字段不为空则需要指定授权使用该证书的 **IP 或域名列表**，由于该证书后续被 `etcd` 集群和 `kubernetes master` 集群使用，所以上面分别指定了 `etcd` 集群、`kubernetes master` 集群的主机 IP 和 **kubernetes 服务的服务 IP**（一般是 `kube-apiserver` 指定的 `service-cluster-ip-range` 网段的第一个IP，如 10.254.0.1）。
 - 这是最小化安装的kubernetes集群，包括一个私有镜像仓库，三个节点的kubernetes集群，以上物理节点的IP也可以更换为主机名。
 
-#### 5.7 生成 kubernetes 证书和私钥
+### 5.7 生成 kubernetes 证书和私钥
 
 ```
 $ cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | cfssljson -bare kubernetes
@@ -465,7 +453,7 @@ kubernetes.csr  kubernetes-csr.json  kubernetes-key.pem  kubernetes.pem
 
 
 
-#### 5.8 创建admin证书
+### 5.8 创建admin证书
 
 创建 admin 证书签名请求文件 `admin-csr.json`：
 
@@ -525,7 +513,7 @@ subjects:
 
 -----------------------------------------------------------------------------------------------------------------------------------------------
 
-#### 5.9 生成admin证书和秘钥
+### 5.9 生成admin证书和秘钥
 
 ```
 cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
@@ -535,7 +523,7 @@ admin.csr  admin-csr.json  admin-key.pem  admin.pem
 
 
 
-#### 5.10 创建kube-proxy证书
+### 5.10 创建kube-proxy证书
 
 ```
 {
@@ -571,7 +559,7 @@ kube-proxy.csr  kube-proxy-csr.json  kube-proxy-key.pem  kube-proxy.pem
 
 
 
-#### 5.11 分发证书
+### 5.11 分发证书
 
 将生成的证书和秘钥文件（后缀名为`.pem`）拷贝到所有机器的 `/etc/kubernetes/ssl` 目录下备用；
 
@@ -584,9 +572,9 @@ scp -r /etc/kubernetes node02:/etc/
 
 
 
-### 06. 安装kubectl命令行工具
+## 06. 安装kubectl命令行工具
 
-#### 6.1 安装kubectl
+### 6.1 安装kubectl
 
 kubectl使用kubenetes包，准备工作的时候已经下载好了，在`/root/`
 
@@ -597,7 +585,7 @@ cp kubernetes/client/bin/kube* /usr/bin/
 chmod a+x /usr/bin/kube*
 ```
 
-#### 6.2 创建kubectl kubeconfig文件
+### 6.2 创建kubectl kubeconfig文件
 
 Master节点操作
 
@@ -630,7 +618,7 @@ kubectl config use-context kubernetes
 
 
 
-#### 6.3 创建TLS Bootstrapping Token
+### 6.3 创建TLS Bootstrapping Token
 
 ```
 export BOOTSTRAP_TOKEN=$(head -c 16 /dev/urandom | od -An -t x | tr -d ' ')
@@ -641,7 +629,7 @@ EOF
 
 
 
-#### 6.4 创建 kubelet bootstrapping kubeconfig 文件
+### 6.4 创建 kubelet bootstrapping kubeconfig 文件
 
 ```
 cd /etc/kubernetes/
@@ -670,7 +658,7 @@ kubectl config use-context default --kubeconfig=bootstrap.kubeconfig
 
 
 
-#### 6.5 创建 kube-proxy kubeconfig 文件
+### 6.5 创建 kube-proxy kubeconfig 文件
 
 ```
 cd /etc/kubernetes/
@@ -697,7 +685,7 @@ kubectl config set-context default \
 kubectl config use-context default --kubeconfig=kube-proxy.kubeconfig
 ```
 
-#### 6.6 分发Kubeconfig文件
+### 6.6 分发Kubeconfig文件
 
 2个kubeconfig文件分发到所有的Node机器上`/etc/kubernetes/`目录
 
@@ -708,7 +696,7 @@ scp -r ./*.kubeconfig node02:/etc/kubernetes/
 
 
 
-### 07. 创建高可用etcd集群
+## 07. 创建高可用etcd集群
 
 - K8S服务使用etcd存储所有数据，etcd为集群，三台机器进行复用。
 - 注意：etcd集群最坏不能坏掉最后一台，不然etcd整个挂掉会导致整个k8s无法进行恢复，数据丢失
@@ -719,7 +707,7 @@ tar -xvf etcd-v3.1.5-linux-amd64.tar.gz
 mv etcd-v3.1.5-linux-amd64/etcd* /usr/local/bin
 ```
 
-#### 7.1 创建etcd的systemd unit文件
+### 7.1 创建etcd的systemd unit文件
 
 在/usr/lib/systemd/system/目录下创建文件etcd.service，内容如下。注意替换IP地址为你自己的etcd集群的主机IP。
 
@@ -769,7 +757,7 @@ LimitNOFILE=65536
 - `--initial-cluster-state` 值为 `new` 时，`--name` 的参数值必须位于 `--initial-cluster` 列表中；
 
 
-#### 7.2 创建环境配置文件
+### 7.2 创建环境配置文件
 
 - 10.10.10.130是我Master节点的IP地址，scp到其余node节点，改对应IP地址和ETCD_NAME即可
 
@@ -797,7 +785,7 @@ ETCD_INITIAL_CLUSTER_TOKEN="etcd-cluster"
 ETCD_ADVERTISE_CLIENT_URLS="https://10.10.10.130:2379"
 ```
 
-#### 7.3 启动etcd集群服务
+### 7.3 启动etcd集群服务
 
 注意： 因为etcd启动文件里面配置了etcd的集群信息，所以启动的顺序是：infra1-->infra2-->infra3
 
@@ -810,7 +798,7 @@ systemctl start etcd
 systemctl status etcd
 ```
 
-#### 7.4 验证etcd服务正常
+### 7.4 验证etcd服务正常
 
 ```shell
 [root@OPS-SZNW-01-Master system]# etcdctl \
@@ -830,9 +818,9 @@ cluster is healthy
 
 
 
-### 08. 部署Master节点
+## 08. 部署Master节点
 
-#### 8.1 Master节点包含组件
+### 8.1 Master节点包含组件
 
 - Kube-apiserver
 
@@ -844,7 +832,7 @@ cluster is healthy
 
 目前这三个服务是部署在同一台机器上的
 
-#### 8.2 获取最新的二进制文件
+### 8.2 获取最新的二进制文件
 
 - 目前版本: V1.10.1 
 - 此步操作只在Master节点
@@ -861,7 +849,7 @@ cluster is healthy
 
 
 
-#### 8.3 Kube-apiserver配置和启动
+### 8.3 Kube-apiserver配置和启动
 
 **创建kube-apiserver的service配置文件**
 
@@ -896,7 +884,7 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 ```
 
-#### 8.4 创建`/etc/kubernetes/config`文件
+### 8.4 创建`/etc/kubernetes/config`文件
 
 该配置文件同时被kube-apiserver，kube-controller-manager、kube-scheduler、kubelet、kube-proxy使用。
 
@@ -926,7 +914,7 @@ KUBE_ALLOW_PRIV="--allow-privileged=true"
 KUBE_MASTER="--master=http://10.10.10.130:8080"
 ```
 
-#### 8.5 创建`/etc/kubernetes/apiserver`配置文件
+### 8.5 创建`/etc/kubernetes/apiserver`配置文件
 
 - 我的kubernetest版本是v1.10版本，下面参数进行了修改，适用于1.9+
 - `--enable-bootstrap-token-auth`是1.9+的KUBE_API_ARGS参数，低于1.9版本请使用：`--experimental-bootstrap-token-auth`
@@ -961,8 +949,8 @@ KUBE_ADMISSION_CONTROL="--admission-control=ServiceAccount,NamespaceLifecycle,Na
 ## Add your own!
 KUBE_API_ARGS="--authorization-mode=Node,RBAC --runtime-config=rbac.authorization.k8s.io/v1beta1 --kubelet-https=true --enable-bootstrap-token-auth --token-auth-file=/etc/kubernetes/token.csv --service-node-port-range=30000-32767 --tls-cert-file=/etc/kubernetes/ssl/kubernetes.pem --tls-private-key-file=/etc/kubernetes/ssl/kubernetes-key.pem --client-ca-file=/etc/kubernetes/ssl/ca.pem --service-account-key-file=/etc/kubernetes/ssl/ca-key.pem --etcd-cafile=/etc/kubernetes/ssl/ca.pem --etcd-certfile=/etc/kubernetes/ssl/kubernetes.pem --etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem --enable-swagger-ui=true --apiserver-count=3 --audit-log-maxage=30 --audit-log-maxbackup=3 --audit-log-maxsize=100 --audit-log-path=/var/lib/audit.log --event-ttl=1h"
 ```
-
-#### 8.6 启动apiserver
+```
+### 8.6 启动apiserver
 
 ```
 systemctl daemon-reload
@@ -973,7 +961,7 @@ systemctl status kube-apiserver
 
 
 
-#### 8.7 kube-controller-manager配置和启动
+x#### 8.7 kube-controller-manager配置和启动
 
 **创建kube-controller-manager的services配置文件**
 
@@ -1016,7 +1004,7 @@ KUBE_CONTROLLER_MANAGER_ARGS="--address=127.0.0.1 --service-cluster-ip-range=10.
 - `--root-ca-file` 用来对 kube-apiserver 证书进行校验，**指定该参数后，才会在Pod 容器的 ServiceAccount 中放置该 CA 证书文件**；
 - `--address` 值必须为 `127.0.0.1`，kube-apiserver 期望 scheduler 和 controller-manager 在同一台机器；
 
-#### 8.8 启动kube-controller-manager
+### 8.8 启动kube-controller-manager
 
 ```shell
 systemctl daemon-reload
@@ -1049,7 +1037,7 @@ etcd-1               Healthy     {"health": "true"}
 
 
 
-#### 8.9 配置和启动kube-scheduler
+### 8.9 配置和启动kube-scheduler
 
 **创建kube-scheduler的service启动配置文件**
 
@@ -1090,7 +1078,7 @@ WantedBy=multi-user.target
 KUBE_SCHEDULER_ARGS="--leader-elect=true --address=127.0.0.1"
 ```
 
-#### 8.10 启动kube-scheduler
+### 8.10 启动kube-scheduler
 
 ```
 systemctl daemon-reload
@@ -1115,7 +1103,7 @@ etcd-2               Healthy   {"health": "true"}
 
 
 
-### 09. 安装Flannel网络插件
+## 09. 安装Flannel网络插件
 
 - 所有的Node节点都需要安装flannel插件才能让所有的Pod加入到一个局域网中。
 
@@ -1126,13 +1114,13 @@ etcd-2               Healthy   {"health": "true"}
 - 每台Node启动Flannel的时候，都会注册一个subenet 路径：`/run/flannel/`
 
 
-#### 9.1 yum安装Flanenel插件
+### 9.1 yum安装Flanenel插件
 
 ```shell
 yum install flannel -y
 ```
 
-#### 9.2 创建flannel启动配置文件
+### 9.2 创建flannel启动配置文件
 
 路径：`/usr/lib/systemd/system/flanneld.service`
 
@@ -1162,7 +1150,7 @@ WantedBy=multi-user.target
 RequiredBy=docker.service
 ```
 
-#### 9.3 创建flannel config文件
+### 9.3 创建flannel config文件
 
 路径：`/etc/sysconfig/flanneld`
 
@@ -1180,7 +1168,7 @@ FLANNEL_ETCD_PREFIX="/kube-centos/network"
 FLANNEL_OPTIONS="-etcd-cafile=/etc/kubernetes/ssl/ca.pem -etcd-certfile=/etc/kubernetes/ssl/kubernetes.pem -etcd-keyfile=/etc/kubernetes/ssl/kubernetes-key.pem"
 ```
 
-#### 9.4 在etcd中创建网络（VPC)
+### 9.4 在etcd中创建网络（VPC)
 
 - 创建好配置文件前，先不进行启动，先进行创建一个大的网络，因为启动的时候会基于这个网络自动分配subnet（网段地址），分配的地址可在`/run/flannel`目录下看到。
 
@@ -1204,7 +1192,7 @@ etcdctl --endpoints=https://10.10.10.130:2379,https://10.10.10.131:2379,https://
   
 ```
 
-#### 9.5 启动Flannel
+### 9.5 启动Flannel
 
 ```shell
 systemctl daemon-reload
@@ -1213,7 +1201,7 @@ systemctl start flanneld
 systemctl status flanneld
 ```
 
-#### 9.6 查看flannel网段信息
+### 9.6 查看flannel网段信息
 
 - 执行以下命令即可查看subnet网段信息
 - 注意：这一步如果查看不到信息，因为还没有flannel启动。
@@ -1229,7 +1217,7 @@ $ etcdctl --endpoints=${ETCD_ENDPOINTS}   --ca-file=/etc/kubernetes/ssl/ca.pem  
 
 
 
-#### 9.7 启动docker
+### 9.7 启动docker
 
 启动之前你需要了解以下知识：
 
@@ -1258,7 +1246,7 @@ flanneld 启动时将网络配置写入到 /run/flannel/docker 文件中的变�
 
 
 
-#### 9.8 Docker Services配置文件
+### 9.8 Docker Services配置文件
 
 ```
 
@@ -1306,7 +1294,7 @@ WantedBy=multi-user.target
 
 
 
-#### 9.9 测试各Node节点网络连通性
+### 9.9 测试各Node节点网络连通性
 
 - 测试的时候分别在不同的时候ping dokcer网关即可
 - 确保docker 和flannel都是启动状态
@@ -1324,7 +1312,7 @@ ping 172.30.83.1
 
 
 
-#### 9.10 关于Flannel启动相关问题记录
+### 9.10 关于Flannel启动相关问题记录
 
 - flannel和docker启动后，ifconfig看到flannel和docker的网络不是一个网络问题
 
