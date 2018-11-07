@@ -2,14 +2,6 @@
 Table of Contents
 =================
 
-Parsing local markdown file requires access to github API
-Please make sure curl is installed and check your network connectivity
-[root@Yangxiaofei kubeadmin]# vim README.md 
-[root@Yangxiaofei kubeadmin]# /root/gh-md-toc README.md 
-
-Table of Contents
-=================
-
    * [目录](#目录)
       * [基于Kubeadm部署Kubernetes1.10集群](#基于kubeadm部署kubernetes110集群)
          * [01. 部署目的](#01-部署目的)
