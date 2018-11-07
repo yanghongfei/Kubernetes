@@ -1,7 +1,76 @@
-###                                    基于Kubeadm部署Kubernetes1.10集群 
+
+Table of Contents
+=================
+
+Parsing local markdown file requires access to github API
+Please make sure curl is installed and check your network connectivity
+[root@Yangxiaofei kubeadmin]# vim README.md 
+[root@Yangxiaofei kubeadmin]# /root/gh-md-toc README.md 
+
+Table of Contents
+=================
+
+   * [目录](#目录)
+      * [基于Kubeadm部署Kubernetes1.10集群](#基于kubeadm部署kubernetes110集群)
+         * [01. 部署目的](#01-部署目的)
+            * [1.1 Kubernetes的特性](#11-kubernetes的特性)
+            * [1.2 贴微服务，开发环境快速部署](#12-贴微服务开发环境快速部署)
+         * [02. 环境说明](#02-环境说明)
+            * [2.1 集群说明](#21-集群说明)
+         * [03. K8S集群名词说明](#03-k8s集群名词说明)
+            * [3.1 Kubernetes](#31-kubernetes)
+            * [3.2 Docker](#32-docker)
+            * [3.3 Etcd](#33-etcd)
+            * [3.4 Calico](#34-calico)
+         * [04. 开始部署Kubernetes集群](#04-开始部署kubernetes集群)
+            * [4.1 安装前准备](#41-安装前准备)
+            * [4.2 安装Docker-CE](#42-安装docker-ce)
+            * [4.3 安装Go](#43-安装go)
+            * [4.4 优化系统和集群准备](#44-优化系统和集群准备)
+            * [4.5 所有节点配置Docker镜像加速](#45-所有节点配置docker镜像加速)
+         * [05. 生成TLS证书和秘钥](#05-生成tls证书和秘钥)
+            * [5.1 Kubernetes 集群所需证书](#51-kubernetes-集群所需证书)
+            * [5.2 安装CFSSL](#52-安装cfssl)
+            * [5.3 创建CA文件,生成etcd证书](#53-创建ca文件生成etcd证书)
+            * [5.4 分发证书到所有节点](#54-分发证书到所有节点)
+         * [06. 安装配置etcd](#06-安装配置etcd)
+            * [6.1 安装etcd](#61-安装etcd)
+            * [6.2 配置etcd](#62-配置etcd)
+            * [6.3  启动etcd](#63--启动etcd)
+            * [6.4 集群状态检查(维护)](#64-集群状态检查维护)
+         * [07 安装配置Kubeadm](#07-安装配置kubeadm)
+            * [7.1 配置kubelet](#71-配置kubelet)
+            * [7.2 加载配置文件](#72-加载配置文件)
+         * [08 Master节点高可用](#08-master节点高可用)
+            * [8.1 安装keepalived](#81-安装keepalived)
+            * [8.2 配置Keepalived](#82-配置keepalived)
+            * [8.3 启动Keepalived](#83-启动keepalived)
+            * [8.4 测试Keepalived可用性](#84-测试keepalived可用性)
+         * [09 初始化集群](#09-初始化集群)
+            * [9.1 初始化集群](#91-初始化集群)
+            * [9.2 初始化失败解决办法](#92-初始化失败解决办法)
+            * [9.3 分发kebeadm生成的证书文件和密码文件](#93-分发kebeadm生成的证书文件和密码文件)
+         * [10. 部署网络组件](#10-部署网络组件)
+            * [10.1 Calico组件部署](#101-calico组件部署)
+            * [10.2 Flannel组件部署](#102-flannel组件部署)
+            * [10.3 查看集群状态](#103-查看集群状态)
+         * [11. 部署Dashboard](#11-部署dashboard)
+            * [11.1 登陆访问](#111-登陆访问)
+         * [12 部署Traefik Ingress](#12-部署traefik-ingress)
+            * [12.1 配置Tracefik HTTPS](#121-配置tracefik-https)
+            * [12.2 部署Traefik](#122-部署traefik)
+            * [12.3 访问Traefik](#123-访问traefik)
+         * [维护相关](#维护相关)
+            * [01. 强制删除Pod](#01-强制删除pod)
+            * [02. 重新获取集群Token](#02-重新获取集群token)
+            * [03. Master节点也允许Pod容器](#03-master节点也允许pod容器)
+            * [04. Dashboard配置用户密码认证方式](#04-dashboard配置用户密码认证方式)
 
 
 
+# 目录
+
+## 基于Kubeadm部署Kubernetes1.10集群 
 ### 01. 部署目的
 
 #### 1.1 Kubernetes的特性
