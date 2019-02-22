@@ -104,15 +104,18 @@ Table of Contents
 - Kubernetes中所有数据都是存储在etcd中的，etcd必须高可用集群
 - Master使用keepalived高可用，Master主要是分发用户操作指令等操作；
 - Master官方给出是用keepalived进行集群，建议也可以使用自建LB/商业AWS的（ALB ELB ）
+- Node节点为搭配Taaefik解析IP高可用，也使用Keepalived，Tarefik解析 VIP上
 
-|            System             |   Roles   |  IP Address  |
-| :---------------------------: | :-------: | :----------: |
-| CentOS Linux release 7.4.1708 | Master01  | 172.16.1.50  |
-| CentOS Linux release 7.4.1708 | Master02  | 172.16.1.51  |
-| CentOS Linux release 7.4.1708 |  Node01   | 172.16.1.52  |
-| CentOS Linux release 7.4.1708 |  Node02   | 172.16.1.53  |
-| CentOS Linux release 7.4.1708 |  Node01   | 172.16.1.54  |
-| CentOS Linux release 7.4.1708 | VM Harbor | 172.16.0.181 |
+|            System             |   Roles   |   IP Address    |
+| :---------------------------: | :-------: | :-------------: |
+|     Master Keepalived VIP     |    VIP    |   172.16.1.49   |
+|      Node Keepalived VIP      |    VIP    |   172.16.1.59   |
+| CentOS Linux release 7.4.1708 | Master01  |   172.16.1.50   |
+| CentOS Linux release 7.4.1708 | Master02  |   172.16.1.51   |
+| CentOS Linux release 7.4.1708 |  Node01   |   172.16.1.52   |
+| CentOS Linux release 7.4.1708 |  Node02   |   172.16.1.53   |
+| CentOS Linux release 7.4.1708 |  Node01   |   172.16.1.54   |
+| CentOS Linux release 7.4.1708 | VM Harbor | xxx.xxx.xxx.xxx |
 
 #### 2.1 集群说明
 
@@ -1791,6 +1794,167 @@ reboot
 
 
 
+#### 05. Node配置Keepalived，避免整个Node挂掉，Tarefik解析不可用问题
+
+- 配置VIP漂移
+- Tarefik解析到VIP上(不再是NodeIP单点)
+
+```shell
+# 所有Node节点执行
+yum install -y keepalived
+systemctl enable keepalived
+```
+
+- Node01配置
+
+```shell
+cat <<EOF >/etc/keepalived/keepalived.conf
+global_defs {
+   router_id LVS_k8s
+}
+
+# vrrp_script CheckK8sMaster {
+#     script "curl -k https://172.16.1.49:6443"    #VIP Address
+#     interval 3
+#     timeout 9
+#     fall 2
+#     rise 2
+# }
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface ens32       #Your Network Interface Name
+    virtual_router_id 61
+    priority 120          #权重，数字大的为主，数字一样则选择第一台为Master
+    advert_int 1
+    mcast_src_ip 172.16.1.52  #local IP
+    nopreempt
+    authentication {
+        auth_type PASS
+        auth_pass sqP05dQgMSlzrxHj
+    }
+    unicast_peer {
+        #172.16.1.52
+        172.16.1.53    #node02
+        172.16.1.54
+    }
+    virtual_ipaddress {
+        172.16.1.59/24    # VIP
+    }
+    # track_script {
+    #     CheckK8sMaster
+    # }
+
+}
+EOF
+```
+
+- Node02配置
+
+```shell
+cat <<EOF >/etc/keepalived/keepalived.conf
+global_defs {
+   router_id LVS_k8s
+}
+
+# vrrp_script CheckK8sMaster {
+#     script "curl -k https://172.16.1.49:6443"
+#     interval 3
+#     timeout 9
+#     fall 2
+#     rise 2
+# }
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface ens32
+    virtual_router_id 61
+    priority 110
+    advert_int 1
+    mcast_src_ip 172.16.1.53   #local_ip
+    nopreempt
+    authentication {
+        auth_type PASS
+        auth_pass sqP05dQgMSlzrxHj
+    }
+    unicast_peer {
+        172.16.1.52
+        #172.16.1.53
+        172.16.1.54
+    }
+    virtual_ipaddress {
+        172.16.1.59/24      #vip
+    }
+    # track_script {
+    #     CheckK8sMaster
+    # }
+
+}
+EOF
+```
+
+- Node03配置
+
+```shell
+cat <<EOF >/etc/keepalived/keepalived.conf
+global_defs {
+   router_id LVS_k8s
+}
+
+# vrrp_script CheckK8sMaster {
+#     script "curl -k https://172.16.1.49:6443"
+#     interval 3
+#     timeout 9
+#     fall 2
+#     rise 2
+# }
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface ens32
+    virtual_router_id 61
+    priority 100
+    advert_int 1
+    mcast_src_ip 172.16.1.54   #local_ip
+    nopreempt
+    authentication {
+        auth_type PASS
+        auth_pass sqP05dQgMSlzrxHj
+    }
+    unicast_peer {
+        172.16.1.52
+        172.16.1.53
+        #172.16.1.54
+    }
+    virtual_ipaddress {
+        172.16.1.59/24      #vip
+    }
+    # track_script {
+    #     CheckK8sMaster
+    # }
+
+}
+EOF
+```
+
+
+
+- 启动服务
+
+```shell
+sed s#'KEEPALIVED_OPTIONS="-D"'#'KEEPALIVED_OPTIONS="-D -d -S 0"'#g /etc/sysconfig/keepalived -i   //配置日志文件
+echo "local0.*    /var/log/keepalived.log" >> /etc/rsyslog.conf
+service rsyslog restart
+systemctl start keepalived
+systemctl status keepalived
+```
+
+- 测试参考**8.4测试Keepalived可用性**
+
+
+
+
+
 ### 参考文档
 
 部署参考文档：
@@ -1808,5 +1972,6 @@ https://godoc.org/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1
 https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/ipvs/README.md
 
 Kubernetes二进制部署参考文档：https://github.com/yanghongfei/Kubernetes/tree/master/kubernetes-Binary
+
 
 
