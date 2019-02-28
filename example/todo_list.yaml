@@ -1,0 +1,109 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: todo
+  template:
+    metadata:
+      labels:
+        app: todo
+    spec:
+      containers:
+      - name: todo
+        ### 应注意镜像仓库与当前命名空间是否打通
+        image:  harbor.shinezone.com/yanghongfei/todo_list:v0.3
+        imagePullPolicy: IfNotPresent
+        ### 利用生命周期钩子在初始化的时候根据环境修改配置，执行脚本部署时候放入镜像  
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - "bash"
+                - "-c"
+                - >
+                  /bin/echo $environment $domainname >>/tmp/xxxx;
+                  sed -i "s#server_name .*#server_name  ${domainname};#g" /etc/nginx/conf.d/todo_list.conf;
+        ports:
+        - name: http
+          containerPort: 80
+        resources:
+          limits:
+            cpu: 0.5
+            memory: 500Mi
+          requests:
+            cpu: 0.3
+            memory: 200Mi
+        env:
+        - name: environment
+          value: "dev"
+        - name: domainname
+          value: "todo.shinezone.com"   ### 与下面 Ingress一致
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        #volumeMounts:
+        #    - name: cronconf
+        #      mountPath: /var/www/do_cron/settings.py
+        #      subPath: settings.py  #以文件的形式挂载
+        #       readOnly: true
+        #    - name: cronnginx
+        #      mountPath: /etc/nginx/conf.d/
+
+      #volumes:
+      #  - name: cronconf
+      #    configMap:
+      #      name: cron-conf   #configmap要提前创建好  kubectl create configmap cmdb-conf --from-file=./cmdb.conf -n qa
+        #- name: cronnginx
+        #  configMap:
+        #    name: cron-nginx-conf  # kubectl create configmap cmdb-nginx-conf --from-file=./nginx_cmdb.conf -n qa
+      imagePullSecrets:
+        - name: registrysecret    ### 仓库密钥名称，要对每个命名空间都做设置
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo       #k8s内网对应的域名为 codo-cmdb.qa.svc.cluster.local
+  labels:
+    app: todo
+spec:
+  selector:
+    app: todo
+  #type: NodePort
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+
+--- 
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: todo-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: todo.shinezone.com
+    http:
+      paths:
+      - path:
+        backend:
+          serviceName: todo
+          servicePort: 80
+

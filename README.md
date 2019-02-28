@@ -1,6 +1,5 @@
 Table of Contents
 =================
-
    * [目录](#目录)
       * [基于Kubeadm部署Kubernetes1.13.3 HA 高可用集群](#基于kubeadm部署kubernetes1133-ha-高可用集群)
          * [01. 部署目的](#01-部署目的)
@@ -43,6 +42,7 @@ Table of Contents
             * [10.1 Calico组件部署（二选一）](#101-calico组件部署二选一)
             * [10.2 Flannel组件部署(二选一)](#102-flannel组件部署二选一)
             * [10.3 查看集群状态](#103-查看集群状态)
+            * [10.4 测试Calico DNS网络问题](#104-测试calico-dns网络问题)
          * [11. 部署Dashboard](#11-部署dashboard)
             * [11.1 登陆访问](#111-登陆访问)
          * [12 部署Traefik Ingress](#12-部署traefik-ingress)
@@ -51,12 +51,15 @@ Table of Contents
             * [12.3 访问Traefik](#123-访问traefik)
          * [13. Prometheus-Operator](#13-prometheus-operator)
             * [13.1 快速开始](#131-快速开始)
-            * [13.5 使用Traefik 代理出来Prometheus Grafana](#135-使用traefik-代理出来prometheus-grafana)
+            * [13.2使用Traefik 代理出来Prometheus Grafana](#132使用traefik-代理出来prometheus-grafana)
+            * [13.3配置Promethe-Operator自定义报警](#133配置promethe-operator自定义报警)
          * [维护相关](#维护相关)
             * [01. 强制删除Pod](#01-强制删除pod)
             * [02. 重新获取集群Token](#02-重新获取集群token)
             * [03. Master节点也允许Pod容器](#03-master节点也允许pod容器)
             * [04. modprobe: FATAL: Module br_netfilter not found](#04-modprobe-fatal-module-br_netfilter-not-found)
+            * [05. Node配置Keepalived，避免整个Node挂掉，Tarefik解析不可用问题](#05-node配置keepalived避免整个node挂掉tarefik解析不可用问题)
+            * [06. POD容器不能访问外网问题](#06-pod容器不能访问外网问题)
          * [参考文档](#参考文档)
 
 
@@ -1023,7 +1026,7 @@ $ systemctl  stop kubelet
  $ etcdctl --endpoints=https://172.16.1.50:2379,https://172.16.1.51:2379,https://172.16.1.52:2379,https://172.16.1.53:2379,https://172.16.1.54:2379 --cacert=/etc/etcd/ssl/ca.pem   --cert=/etc/etcd/ssl/etcd.pem   --key=/etc/etcd/ssl/etcd-key.pem    del / --prefix
 ```
 
-####
+
 
 ### 10. 部署网络组件
 
@@ -1095,6 +1098,69 @@ kube-proxy-j7ltr                         1/1     Running   0          22h
 kube-proxy-z4tbz                         1/1     Running   0          22h
 kube-scheduler-k8s01-master01            1/1     Running   0          22h
 kube-scheduler-k8s01-master02            1/1     Running   0          6h47m
+```
+
+#### 10.4 测试Calico DNS网络问题
+
+> DNS使用CoreDNS，是集群初始化默认启用的，Node之间通信是依赖Calico的
+
+**坑一，Busybox镜像Bug**
+
+```shell
+$ kubectl run curl --image=radial/busyboxplus:curl   #启动busybox
+$ nslookup kubernetes  #非全路径则无法解析
+Server:    10.96.0.10
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local  
+nslookup: can‘t resolve kubernetes
+
+$ nslookup kubernetes.default.svc.cluster.local     #nslookup解析全路径就可以解析
+Server:    10.96.0.10 
+Address 1: 10.96.0.10 kube-dns.kube-system.svc.cluster.local
+
+Name:      kubernetes.default.svc.cluster.local
+Address 1: 10.96.0.1 kubernetes.default.svc.cluster.local
+
+# 使用DNSTOOLS工具
+$ kubectl run -it --rm --image=infoblox/dnstools dns-client
+dnstools# ping kubernetes   #确认可以解析内部
+PING kubernetes (10.96.0.1): 56 data bytes
+64 bytes from 10.96.0.1: seq=0 ttl=64 time=0.042 ms
+
+dnstools# ping www.qq.com   #确认pod可以访问外网
+```
+
+**坑二，pod请求外网，DNS报错io/timeout**
+
+> 简单记录下这里的排查思路。
+>
+> 当我整个集群都部署完成，监控就位的时候，发现Alertmanager无法发送邮件，然后确认Alert信息从Prometheus递交给了Alertmanager。
+>
+> 查看POD日志，POD日志显示无法链接到SMTP服务器，这时候意识到可能DNS解析有问题，然后就启动了busybox测试DNS，What Fuck!  我CoreDNS 解析集群内部的SVC都解析不到，那我Tarefik怎么转发工作的。
+>
+> 最后排查半天原来是busybox镜像有bug，nslookup 全路径就可以解析，如以上**坑一** ，使用dnstools即可解决，内网通了很开心，然后外网还是不通，其余POD没有报错日志，唯有DNS一直报错 timeout。
+>
+> 到了这个时候一直认为是CoreDNS问题，先去了解了下K8S集群中DNS工作原理，参考链接：https://www.simpleapples.com/2018/07/15/solving-kubernetes-dns-problem/
+>
+> DNS解析外部地址需要借助上层DNS，CoreDNS里面也有配置依赖Node DNS，默认/etc/resolv.conf 里面的nameserver，接着使用`kuberctl exec <dns_pod_name> cat /etc/resolv.conf -n kube-system ` 查看我DNS确实依赖了我Node的DNS呀 参考文档：https://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/，什么情况，为什么还不能解析外网。
+>
+> 然后将CoreDNS换成了Kube-DNS，还是不行，各种尝试，reset集群，重启机器，耗时了将近一天时间，集群也重新建立了多次，最后开始怀疑自己排查点好像出错了。
+>
+> 开始意识到应该不是DNS问题，可能是我的Calico网络有问题，但是我POD之间又是可以通信，很奇怪，终于皇天不负有心人，我开始将重心搜素放到了`pod无法上外网`让我找到了以下https://blog.csdn.net/kozazyh/article/details/80595782，这里我一直认为我kube-proxy使用的IPVS模块，不会和Iptable有关系，直到我加了2条POD和SVC的iptable NAT规则，发现网络居然通了。。。。 我擦，这可能不是官方的正确解法，可能是我Calico网络没配置好，或者我IPVS这块理解有问题，还是要多看官方文档。
+
+```shell
+#解决办法：
+
+cat config.yaml   #你的SVC和POD地址段，添加2条规则
+$ ps uax |grep kube-proxy  //确保加载了--cluster-cidr
+$ iptables -nvL |grep FORWARD  //查看FORWARD 是否为ACCEPT 
+$ iptables -P FORWARD ACCEPT  //开启IPtableS转发ACCEPT
+$ sysctl -a | grep ip_forward //确认系统ip_forward开启
+
+$ /sbin/iptables -t nat -I POSTROUTING -s  100.64.0.0/10 -j MASQUERADE
+$ /sbin/iptables -t nat -I POSTROUTING -s  10.96.0.0/12 -j MASQUERADE
+
+$ kubectl run -it --rm --image=infoblox/dnstools dns-client #测试
+dnstools# ping qq.com  #可以ping通
 ```
 
 
@@ -1657,11 +1723,7 @@ kubectl apply -f serviceMonitor/
 kubectl -n monitoring get all
 ```
 
-
-
-
-
-#### 13.5 使用Traefik 代理出来Prometheus Grafana 
+#### 13.2使用Traefik 代理出来Prometheus Grafana 
 
 > 将以下文件进行apply即可
 >
@@ -1705,8 +1767,29 @@ spec:
       - path: /
         backend:
           serviceName: prometheus-k8s
-          servicePort: 9090
+          servicePort: 9090     
 ```
+
+- `alertmanager-ingress.yaml`
+
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: alertmanager-k8s
+  namespace: monitoring
+spec:
+  rules:
+  - host: k8s-alertmanager.shinezone.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: alertmanager-main
+          servicePort: 9093
+```
+
+
 
 - 效果图
 
@@ -1716,7 +1799,253 @@ spec:
 
 ![](./images/grafana-nodes.png)
 
+
+
+![](./images/altermanager.png)
+
+
+
+#### 13.3配置Promethe-Operator自定义报警
+
+> OK ，到了这一步监控组件已经安装完成，接下来就是要理解怎么自定义规则，规则怎么写？报警怎么触发。
+
+现在登陆到Prometheus的Dashboard发现已经有一些自带的规则了，还有已经触发的Alter，如下图
+
 ![](./images/prometheus.png)
+
+
+
+>但是这些报警信息是哪里来的呢？他们应该用怎样的方式通知我们呢？我们知道之前我们使用自定义的方式可以在 Prometheus 的配置文件之中指定 AlertManager 实例和 报警的 rules 文件，现在我们通过 Operator 部署的呢？我们可以在 Prometheus Dashboard 的 Config 页面下面查看关于 AlertManager 的配置：
+
+```yaml
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+  external_labels:
+    prometheus: monitoring/k8s
+    prometheus_replica: prometheus-k8s-0
+alerting:
+  alert_relabel_configs:
+  - separator: ;
+    regex: prometheus_replica
+    replacement: $1
+    action: labeldrop
+  alertmanagers:
+  - kubernetes_sd_configs:
+    - role: endpoints
+      namespaces:
+        names:
+        - monitoring
+    scheme: http
+    path_prefix: /
+    timeout: 10s
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_service_name]
+      separator: ;
+      regex: alertmanager-main
+      replacement: $1
+      action: keep
+    - source_labels: [__meta_kubernetes_endpoint_port_name]
+      separator: ;
+      regex: web
+      replacement: $1
+      action: keep
+rule_files:
+- /etc/prometheus/rules/prometheus-k8s-rulefiles-0/*.yaml
+```
+
+上面 alertmanagers 实例的配置我们可以看到是通过角色为 endpoints 的 kubernetes 的服务发现机制获取的，匹配的是服务名为 alertmanager-main，端口名未 web 的 Service 服务，我们查看下 alertmanager-main 这个 Service：
+
+```shell
+$ kubectl describe svc alertmanager-main -n monitoring
+Name:              alertmanager-main
+Namespace:         monitoring
+Labels:            alertmanager=main
+Annotations:       kubectl.kubernetes.io/last-applied-configuration:
+                     {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"labels":{"alertmanager":"main"},"name":"alertmanager-main","namespace":"...
+Selector:          alertmanager=main,app=alertmanager
+Type:              ClusterIP
+IP:                10.111.82.41
+Port:              web  9093/TCP
+TargetPort:        web/TCP
+Endpoints:         100.64.2.6:9093,100.64.2.8:9093,100.64.3.6:9093
+Session Affinity:  None
+Events:            <none>
+```
+
+可以看到服务名正是 alertmanager-main，Port 定义的名称也是 web，符合上面的规则，所以 Prometheus 和 AlertManager 组件就正确关联上了。而对应的报警规则文件位于：/etc/prometheus/rules/prometheus-k8s-rulefiles-0/目录下面所有的 YAML 文件。我们可以进入 Prometheus 的 Pod 中验证下该目录下面是否有 YAML 文件：
+
+```shell
+$ kubectl exec -it prometheus-k8s-0 /bin/sh -n monitoring
+Defaulting container name to prometheus.
+Use 'kubectl describe pod/prometheus-k8s-0 -n monitoring' to see all of the containers in this pod.
+/prometheus $ ls /etc/prometheus/rules/prometheus-k8s-rulefiles-0/
+monitoring-prometheus-k8s-rules.yaml
+/prometheus $ cat /etc/prometheus/rules/prometheus-k8s-rulefiles-0/monitoring-pr
+ometheus-k8s-rules.yaml
+groups:
+- name: k8s.rules
+  rules:
+  - expr: |
+      sum(rate(container_cpu_usage_seconds_total{job="kubelet", image!="", container_name!=""}[5m])) by (namespace)
+    record: namespace:container_cpu_usage_seconds_total:sum_rate
+......
+```
+
+这个 YAML 文件实际上就是我们之前创建的一个 PrometheusRule 文件包含的：
+
+```shell
+$ cat prometheus-rules.yaml
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-k8s-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: k8s.rules
+    rules:
+    - expr: |
+        sum(rate(container_cpu_usage_seconds_total{job="kubelet", image!="", container_name!=""}[5m])) by (namespace)
+      record: namespace:container_cpu_usage_seconds_total:sum_rate
+```
+
+我们这里的 PrometheusRule 的 name 为 prometheus-k8s-rules，namespace 为 monitoring，我们可以猜想到我们创建一个 PrometheusRule 资源对象后，会自动在上面的 prometheus-k8s-rulefiles-0 目录下面生成一个对应的<namespace>-<name>.yaml文件，所以如果以后我们需要自定义一个报警选项的话，只需要定义一个 PrometheusRule 资源对象即可。至于为什么 Prometheus 能够识别这个 PrometheusRule 资源对象呢？这就需要查看我们创建的 prometheus 这个资源对象了，里面有非常重要的一个属性 ruleSelector，用来匹配 rule 规则的过滤器，要求匹配具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 资源对象，现在明白了吧？
+
+```yaml
+ruleSelector:
+  matchLabels:
+    prometheus: k8s
+    role: alert-rules
+```
+
+所以我们要想自定义一个报警规则，只需要创建一个具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 对象就行了，这里简单测试一个rule规则文件
+
+```yaml
+$ cat yanghongfei.yaml 
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-ss-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: ss.rules
+    rules:
+    - alert: KubeStateMetricsDown
+      annotations:
+        message: KubeStateMetrics has disappeared from Prometheus target discovery.
+        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatemetricsdown
+      expr: |
+        up == 0
+      for: 1m
+      labels:
+        severity: critical
+```
+
+注意 label 标签一定至少要有 prometheus=k8s 和 role=alert-rules，创建完成后，隔一会儿再去容器中查看下 rules 文件夹
+
+![](./images/yanghongfei_rule.png)
+
+可以看到我们创建的 rule 文件已经被注入到了对应的 rulefiles 文件夹下面了，证明我们上面的设想是正确的。然后再去 Prometheus Dashboard 的 Alert 页面下面就可以查看到上面我们新建的报警规则了
+
+
+
+**配置报警**
+
+  我们知道了如何去添加一个报警规则配置项，但是这些报警信息用怎样的方式去发送呢？前面的课程中我们知道我们可以通过 AlertManager 的配置文件去配置各种报警接收器，现在我们是通过 Operator 提供的 alertmanager 资源对象创建的组件，应该怎样去修改配置呢？ 
+
+  首先我们将 alertmanager-main 这个 Service 改为 NodePort 类型的 Service，修改完成后我们可以在页面上的 status 路径下面查看 AlertManager 的默认配置信息。
+
+这些配置信息实际上是来自于我们之前在prometheus-operator/contrib/kube-prometheus/manifests目录下面创建的 alertmanager-secret.yaml 文件：
+
+```shell
+apiVersion: v1
+data:
+  alertmanager.yaml: Imdsb2JhbCI6IAogICJyZXNvbHZlX3RpbWVvdXQiOiAiNW0iCiJyZWNlaXZlcnMiOiAKLSAibmFtZSI6ICJudWxsIgoicm91dGUiOiAKICAiZ3JvdXBfYnkiOiAKICAtICJqb2IiCiAgImdyb3VwX2ludGVydmFsIjogIjVtIgogICJncm91cF93YWl0IjogIjMwcyIKICAicmVjZWl2ZXIiOiAibnVsbCIKICAicmVwZWF0X2ludGVydmFsIjogIjEyaCIKICAicm91dGVzIjogCiAgLSAibWF0Y2giOiAKICAgICAgImFsZXJ0bmFtZSI6ICJEZWFkTWFuc1N3aXRjaCIKICAgICJyZWNlaXZlciI6ICJudWxsIg==
+kind: Secret
+metadata:
+  name: alertmanager-main
+  namespace: monitoring
+type: Opaque
+```
+
+可以将 alertmanager.yaml 对应的 value 值做一个 base64 解码：
+
+```yaml
+$ echo "Imdsb2JhbCI6IAogICJyZXNvbHZlX3RpbWVvdXQiOiAiNW0iCiJyZWNlaXZlcnMiOiAKLSAibmFtZSI6ICJudWxsIgoicm91dGUiOiAKICAiZ3JvdXBfYnkiOiAKICAtICJqb2IiCiAgImdyb3VwX2ludGVydmFsIjogIjVtIgogICJncm91cF93YWl0IjogIjMwcyIKICAicmVjZWl2ZXIiOiAibnVsbCIKICAicmVwZWF0X2ludGVydmFsIjogIjEyaCIKICAicm91dGVzIjogCiAgLSAibWF0Y2giOiAKICAgICAgImFsZXJ0bmFtZSI6ICJEZWFkTWFuc1N3aXRjaCIKICAgICJyZWNlaXZlciI6ICJudWxsIg==" | base64 -d
+"global":
+  "resolve_timeout": "5m"
+"receivers":
+- "name": "null"
+"route":
+  "group_by":
+  - "job"
+  "group_interval": "5m"
+  "group_wait": "30s"
+  "receiver": "null"
+  "repeat_interval": "12h"
+  "routes":
+  - "match":
+      "alertname": "DeadMansSwitch"
+    "receiver": "null"
+```
+
+我们可以看到内容和上面查看的配置信息是一致的，所以如果我们想要添加自己的接收器，或者模板消息，我们就可以更改这个文件：
+
+```yaml
+cat alertmanager.yaml 
+global:
+  resolve_timeout: 5m
+  smtp_smarthost: 'smtp.163.com:25'
+  smtp_from: 'yanghongfei97@163.com'
+  smtp_auth_username: 'yanghongfei97@163.com'
+  smtp_auth_password: '<email_password>'
+  smtp_hello: '163.com'
+  smtp_require_tls: false
+route:
+  group_by: ['job', 'severity']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: default
+  routes:
+  - receiver: webhook
+    match:
+      alertname: CoreDNSDown
+receivers:
+- name: 'default'
+  email_configs:
+  - to: '1923671815@qq.com'
+    send_resolved: true
+- name: 'webhook'
+  webhook_configs:
+  - url: 'https://oapi.dingtalk.com/robot/send?access_token=xxxxx'
+    send_resolved: true
+```
+
+将上面文件保存为 alertmanager.yaml，然后使用这个文件创建一个 Secret 对象：
+
+```shell
+# 先将之前的 secret 对象删除
+$ kubectl delete secret alertmanager-main -n monitoring
+secret "alertmanager-main" deleted
+$ kubectl create secret generic alertmanager-main --from-file=alertmanager.yaml -n monitoring
+secret "alertmanager-main" created
+```
+
+![](./images/altermanager_config.png)
+
+报警内容
+
+![](./images/alter01.png)
 
 
 
@@ -1950,6 +2279,28 @@ systemctl status keepalived
 ```
 
 - 测试参考**8.4测试Keepalived可用性**
+
+
+
+#### 06. POD容器不能访问外网问题
+
+> 详细排查思路请参考**10.4测试Calico和DNS网络问题**
+
+```shell
+​```
+cat config.yaml   #你的SVC和POD地址段，添加2条规则
+$ ps uax |grep kube-proxy  //确保加载了--cluster-cidr
+$ iptables -nvL |grep FORWARD  //查看FORWARD 是否为ACCEPT 
+$ iptables -P FORWARD ACCEPT  //开启IPtableS转发ACCEPT
+$ sysctl -a | grep ip_forward //确认系统ip_forward开启
+
+$ /sbin/iptables -t nat -I POSTROUTING -s  100.64.0.0/10 -j MASQUERADE
+$ /sbin/iptables -t nat -I POSTROUTING -s  10.96.0.0/12 -j MASQUERADE
+
+$ kubectl run -it --rm --image=infoblox/dnstools dns-client #测试
+dnstools# ping qq.com  #可以ping通
+​```
+```
 
 
 
