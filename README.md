@@ -2080,6 +2080,9 @@ secret "alertmanager-main" created
 $ kubectl delete  pods calico-node-wkmfl   --grace-period=0 --force --namespace kube-system
 ##强制重启pod
 kubectl get pods coredns-bb849946b-jflvr -n kube-system -o yaml | kubectl replace --force -f -
+
+##强制重新部署
+kubectl get deployment grafana -n monitoring -o yaml   | kubectl replace --force -f -
 ```
 
 #### 02. 重新获取集群Token
