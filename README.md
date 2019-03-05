@@ -1923,7 +1923,7 @@ ruleSelector:
     role: alert-rules
 ```
 
-所以我们要想自定义一个报警规则，只需要创建一个具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 对象就行了，这里简单测试一个rule规则文件，`更多rules文件请参看本项目下的prometheus_rules目录`
+所以我们要想自定义一个报警规则，只需要创建一个具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 对象就行了，这里简单测试一个rule规则文件，[更多rules文件参考](https://github.com/yanghongfei/Kubernetes/tree/master/kube-prometheus/manifests/prometheus/prometheus_rules)
 
 ```yaml
 $ cat prometheus-cpu-rules.yaml 
@@ -2058,7 +2058,7 @@ secret "alertmanager-main" created
 
 **以上是自带规则，当然读到这里你已经知道了他的rules逻辑，你可以自己进行自定义规则**
 
-这里是我的自定义规则面板，和测试结果，rules规则文件我也放到了`promethues-rules`目录中
+这里是我的自定义规则面板，和测试结果，rules规则文件我也放到了`promethues-rules`目录中,[更多rules文件参考](https://github.com/yanghongfei/Kubernetes/tree/master/kube-prometheus/manifests/prometheus/prometheus_rules)
 
 ![](./images/prometheus_alerts.png)
 
