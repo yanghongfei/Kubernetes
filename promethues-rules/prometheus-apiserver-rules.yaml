@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-apiserver-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: APIServer监控
+    rules:
+    - alert: K8S APiServer Down
+      annotations:
+        detail:  "{{$labels.instance}}: APIServer Down (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: APIServer Down"
+      expr: |
+        up{endpoint="https",job="apiserver",namespace="default",service="kubernetes"} == 0
+      for: 1m
+      labels:
+        severity: 严重

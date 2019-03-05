@@ -1815,7 +1815,7 @@ spec:
 
 
 
->但是这些报警信息是哪里来的呢？他们应该用怎样的方式通知我们呢？我们知道之前我们使用自定义的方式可以在 Prometheus 的配置文件之中指定 AlertManager 实例和 报警的 rules 文件，现在我们通过 Operator 部署的呢？我们可以在 Prometheus Dashboard 的 Config 页面下面查看关于 AlertManager 的配置：
+>但是这些报警信息是哪里来的呢？他们应该用怎样的方式通知我们呢？现在我们通过 Operator 部署的呢？我们可以在 Prometheus Dashboard 的 Config 页面下面**查看关于 AlertManager 的配置**：
 
 ```yaml
 global:
@@ -1923,31 +1923,42 @@ ruleSelector:
     role: alert-rules
 ```
 
-所以我们要想自定义一个报警规则，只需要创建一个具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 对象就行了，这里简单测试一个rule规则文件
+所以我们要想自定义一个报警规则，只需要创建一个具有 prometheus=k8s 和 role=alert-rules 标签的 PrometheusRule 对象就行了，这里简单测试一个rule规则文件，`更多rules文件请参看本项目下的prometheus_rules目录`
 
 ```yaml
-$ cat yanghongfei.yaml 
+$ cat prometheus-cpu-rules.yaml 
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   labels:
     prometheus: k8s
     role: alert-rules
-  name: prometheus-ss-rules
+  name: prometheus-cpu-rules
   namespace: monitoring
 spec:
   groups:
-  - name: ss.rules
+  - name: 主机CPU监控
     rules:
-    - alert: KubeStateMetricsDown
+    - alert: CPU利用率过高
       annotations:
-        message: KubeStateMetrics has disappeared from Prometheus target discovery.
-        runbook_url: https://github.com/kubernetes-monitoring/kubernetes-mixin/tree/master/runbook.md#alert-name-kubestatemetricsdown
+        detail:  "{{$labels.instance}}: CPU利用率过高于75% (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: CPU利用率过高"
       expr: |
-        up == 0
+        100 - (avg by (instance) (irate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m])) * 100) > 75
       for: 1m
       labels:
-        severity: critical
+        severity: 严重
+    - name: 主机CPU Load15 监控
+    rules:
+    - alert: CPU Load 15分钟过高
+      annotations:
+        detail:  "{{$labels.instance}}: 15分钟内CPU Load 过高，(当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: 15分钟内CPU Load 过高"
+      expr: |
+        (node_load15) > 1     #根据你的主机核心数来定
+      for: 1m
+      labels:
+        severity: 严重
 ```
 
 注意 label 标签一定至少要有 prometheus=k8s 和 role=alert-rules，创建完成后，隔一会儿再去容器中查看下 rules 文件夹
@@ -2041,11 +2052,21 @@ $ kubectl create secret generic alertmanager-main --from-file=alertmanager.yaml 
 secret "alertmanager-main" created
 ```
 
+**这时候再次确认配置已经被更改，如下图**
+
 ![](./images/altermanager_config.png)
 
-报警内容
+**以上是自带规则，当然读到这里你已经知道了他的rules逻辑，你可以自己进行自定义规则**
 
-![](./images/alter01.png)
+这里是我的自定义规则面板，和测试结果，rules规则文件我也放到了`promethues-rules`目录中
+
+![](./images/prometheus_alerts.png)
+
+![](./images/prometheus_rules.png)
+
+**CPU 15分钟Load>2报警**
+
+![](./images/email.png)
 
 
 

@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-k8s-services-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: K8S kube_service_info
+    rules:
+    - alert: Has service down
+      annotations:
+        detail:  "你的集群中有service出现down,请管理员尽快处理，cluster_ip：{{$labels.cluster_ip}}, instance:{{$labels.instance}}, pod_name：{{$labels.pod}}，svc_name: {{$labels.service}}, (当前值: {{ $value }})"
+        summary: "k8s cluster has service is down."
+      expr: |
+        kube_service_info == 0
+      for: 1m
+      labels:
+        severity: 严重

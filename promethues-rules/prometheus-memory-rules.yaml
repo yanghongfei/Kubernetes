@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-memory-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: 主机内存监控
+    rules:
+    - alert: 内存使用率过高
+      annotations:
+        detail:  "{{$labels.instance}}: 内存使用率高于75% (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: 内存使用率过高"
+      expr: |
+        (1 - ( avg by (instance) (node_memory_MemAvailable_bytes / (node_memory_MemTotal_bytes))))* 100 > 75
+      for: 1m
+      labels:
+        severity: 严重

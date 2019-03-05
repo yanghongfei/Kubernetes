@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-k8s-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: 主机CPU监控
+    rules:
+    - alert: CPU利用率过高
+      annotations:
+        detail:  "{{$labels.instance}}: CPU利用率过高于75% (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: CPU利用率过高"
+      expr: |
+        100 - (avg by (instance) (irate(node_cpu_seconds_total{job="node-exporter",mode="idle"}[5m])) * 100) > 75
+      for: 1m
+      labels:
+        severity: 严重
+  - name: 主机内存监控
+    rules:
+    - alert: 内存使用率过高
+      annotations:
+        detail:  "{{$labels.instance}}: 内存使用率高于75% (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: 内存使用率过高"
+      expr: |
+        (1 - ( avg by (instance) (node_memory_MemAvailable_bytes / (node_memory_MemTotal_bytes))))* 100 > 75
+      for: 1m
+      labels:
+        severity: 严重
+  - name: 磁盘空间监控
+    rules:
+    - alert: 磁盘使用率过高
+      annotations:
+        detail:  "{{$labels.instance}}: 磁盘:{{$labels.mountpoint}}使用率高于5% (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: 磁盘使用率过高"
+      expr: |
+        ((node_filesystem_size_bytes{mountpoint="/"} - node_filesystem_free_bytes{mountpoint="/"} ) / node_filesystem_size_bytes{mountpoint="/"} * 100) > 5
+      for: 1m
+      labels:
+        severity: 严重
