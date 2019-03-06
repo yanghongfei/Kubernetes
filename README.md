@@ -53,7 +53,7 @@ Table of Contents
             * [13.1 快速开始](#131-快速开始)
             * [13.2使用Traefik 代理出来Prometheus Grafana](#132使用traefik-代理出来prometheus-grafana)
             * [13.3配置Promethe-Operator自定义报警](#133配置promethe-operator自定义报警)
-            * [13.4使用Promethues监控外接ETCD集群](#134使用Promethues监控外接ETCD集群)
+            * [13.4使用Promethues监控外接ETCD集群](#134-使用promethues监控外接etcd集群)
          * [维护相关](#维护相关)
             * [01. 强制删除Pod](#01-强制删除pod)
             * [02. 重新获取集群Token](#02-重新获取集群token)
