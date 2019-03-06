@@ -1,0 +1,65 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-k8s-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: APIServerMonitoring
+    rules:
+    - alert: APIServerDown
+      annotations:
+        detail:  "APIServer Down"
+        summary: "APIServer has disappeared from Prometheus target discovery."
+      expr: |
+        absent(up{job="apiserver"} == 1)
+      for: 1m
+      labels:
+        severity: 严重
+  - name: KubeSchedulerMonitoring
+    rules:
+    - alert: KubeSchedulerDown
+      annotations:
+        detail:  "KubeSchedulerDown"
+        summary: "KubeScheduler has disappeared from Prometheus target discovery."
+      expr: |
+        absent(up{job="kube-scheduler"} == 1)
+      for: 1m
+      labels:
+        severity: 严重
+  # - name: KubeControllerManagerMonitoring
+  #   rules:
+  #   - alert: KubeControllerManagerDown
+  #     annotations:
+  #       detail:  "KubeControllerManagerDown"
+  #       summary: "KubeControllerManager has disappeared from Prometheus target discovery."
+  #     expr: |
+  #       absent(up{job="kube-controller-manager"} == 1)
+  #     for: 1m
+  #     labels:
+  #       severity: 严重
+  - name: KubeletMonitorings
+    rules:
+    - alert: KubeletDown
+      annotations:
+        detail:  "你有一台NodeName为：{{$labels.node}}, 实例IP端口：{{$labels.instance}}，Kubelet Down (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: Kubelet Down"
+      expr: |
+        up{endpoint="https-metrics",job="kubelet",namespace="kube-system",service="kubelet"} == 0
+      for: 1m
+      labels:
+        severity: 严重
+  - name: KubeNodeNotReady
+    rules:
+    - alert: KubeNodeDown
+      annotations:
+        detail:  "{{ $labels.node }} has been unready for more than an hour."
+        summary: "有一台Node状态是NoReady了，请管理员尽快检查！"
+      expr: |
+        kube_node_status_condition{job="kube-state-metrics",condition="Ready",status="true"} == 0
+      for: 1h
+      labels:
+        severity: 严重

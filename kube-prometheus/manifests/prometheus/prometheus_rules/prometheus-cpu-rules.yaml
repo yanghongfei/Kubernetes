@@ -8,9 +8,9 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: 主机CPU监控
+  - name: Node主机CPU利用率监控
     rules:
-    - alert: CPU利用率过高
+    - alert: Node主机CPU利用率过高
       annotations:
         detail:  "{{$labels.instance}}: CPU利用率过高于75% (当前值: {{ $value }})"
         summary: "{{$labels.instance}}: CPU利用率过高"
@@ -19,14 +19,14 @@ spec:
       for: 1m
       labels:
         severity: 严重
-    - name: 主机CPU Load15 监控
+  - name: Node主机CPULoad监控
     rules:
-    - alert: CPU Load 15分钟过高
+    - alert: Node主机CPULoad过高
       annotations:
         detail:  "{{$labels.instance}}: 15分钟内CPU Load 过高，(当前值: {{ $value }})"
         summary: "{{$labels.instance}}: 15分钟内CPU Load 过高"
       expr: |
-        (node_load15) > 1     #根据你的主机核心数来定
+        (node_load15) > 2     #根据你的主机核心数来定
       for: 1m
       labels:
         severity: 严重

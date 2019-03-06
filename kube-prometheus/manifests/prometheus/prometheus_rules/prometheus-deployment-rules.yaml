@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-k8s-deployment-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: KubeDeploymentMonitoring
+    rules:
+    - alert: KubeDeploymentError
+      annotations:
+        detail:  "Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has not
+          matched the expected number of replicas for longer than an hour."
+        summary: "Deployment在一小时内部署有异常，请管理员检查部署"
+      expr: |
+        kube_deployment_spec_replicas{job="kube-state-metrics"}!=kube_deployment_status_replicas_available{job="kube-state-metrics"}
+      for: 1h
+      labels:
+        severity: 严重

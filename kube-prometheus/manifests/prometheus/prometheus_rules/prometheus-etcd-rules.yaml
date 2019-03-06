@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-etcd-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: EtcdMonitoring
+    rules:
+    - alert: EtcdDown 
+      annotations:
+        detail:  "{{$labels.instance}}: etcd down (当前值: {{ $value }})"
+        summary: "{{$labels.instance}}: etcd 出现异常，请管理员尽快排查"
+      expr: |
+        up{endpoint="port",job="etcd",namespace="kube-system",service="etcd-k8s"} == 0
+      for: 1m
+      labels:
+        severity: 严重

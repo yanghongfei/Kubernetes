@@ -15,7 +15,7 @@ route:
   routes:
   - receiver: webhook
     match:
-      alertname: CoreDNSDown
+      alertname: Node主机CPU利用率过高
 receivers:
 - name: 'default'
   email_configs:
@@ -23,5 +23,5 @@ receivers:
     send_resolved: true
 - name: 'webhook'
   webhook_configs:
-  - url: 'https://oapi.dingtalk.com/robot/send?access_token=xxx'
+  - url: 'http://flask-alert.shinezone.com/send'
     send_resolved: true

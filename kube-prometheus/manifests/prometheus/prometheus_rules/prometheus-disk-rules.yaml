@@ -8,9 +8,9 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: Data磁盘监控
+  - name: Node主机数据盘监控
     rules:
-    - alert: Data磁盘使用率过高
+    - alert: Node主机数据盘可用空间不足
       annotations:
         detail:  "{{$labels.instance}}: 磁盘:{{$labels.mountpoint}}使用率高于75% (当前值: {{ $value }})"
         summary: "{{$labels.instance}}: 磁盘使用率过高"
@@ -19,9 +19,9 @@ spec:
       for: 1m
       labels:
         severity: 严重
-  - name: Boot磁盘监控
+  - name: Node主机系统盘监控
     rules:
-    - alert: Boot磁盘使用率过高
+    - alert: Node主机系统盘可用空间不足
       annotations:
         detail:  "{{$labels.instance}}: 磁盘:{{$labels.mountpoint}}使用率高于80% (当前值: {{ $value }})"
         summary: "{{$labels.instance}}: 磁盘使用率过高"

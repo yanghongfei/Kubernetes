@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-altermanager-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: AlterManagerMonitoring
+    rules:
+    - alert: AlertmanagerDown 
+      annotations:
+        detail:  "AlertmanagerDown,请管理员尽快处理，(当前值: {{ $value }})"
+        summary: "AlertmanagerDown"
+      expr: |
+        absent(up{job="alertmanager-main",namespace="monitoring"} == 1)
+      for: 1m
+      labels:
+        severity: 警告

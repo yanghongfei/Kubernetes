@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-node-exporter-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: NodeExporterMonitoring
+    rules:
+    - alert: NodeExporterDown 
+      annotations:
+        detail:  "采集器NodeExporterDown,请管理员尽快处理，(当前值: {{ $value }})"
+        summary: "采集器NodeExporterDown"
+      expr: |
+        absent(up{job="node-exporter"} == 1)
+      for: 1m
+      labels:
+        severity: 警告

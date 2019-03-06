@@ -1,0 +1,32 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    prometheus: k8s
+    role: alert-rules
+  name: prometheus-prometheus-rules
+  namespace: monitoring
+spec:
+  groups:
+  - name: PrometheusMonitoring
+    rules:
+    - alert: PrometheusDown 
+      annotations:
+        detail:  "PrometheusDown,请管理员尽快处理，(当前值: {{ $value }})"
+        summary: "PrometheusDown"
+      expr: |
+        absent(up{job="prometheus-k8s",namespace="monitoring"} == 1)
+      for: 1m
+      labels:
+        severity: 警告
+  - name: PrometheusOperatorMonitoring
+    rules:
+    - alert: PrometheusOperatorDown
+      annotations:
+        detail:  "PrometheusOperatorDown,请管理员尽快处理，(当前值: {{ $value }})"
+        summary: "PrometheusOperatorDown"
+      expr: |
+        absent(up{job="prometheus-operator",namespace="monitoring"} == 1)
+      for: 1m
+      labels:
+        severity: 警告

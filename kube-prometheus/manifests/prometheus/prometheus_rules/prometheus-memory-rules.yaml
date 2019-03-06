@@ -8,9 +8,9 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: 主机内存监控
+  - name: Node主机内存监控
     rules:
-    - alert: 内存使用率过高
+    - alert: Node内存使用率过高
       annotations:
         detail:  "{{$labels.instance}}: 内存使用率高于75% (当前值: {{ $value }})"
         summary: "{{$labels.instance}}: 内存使用率过高"

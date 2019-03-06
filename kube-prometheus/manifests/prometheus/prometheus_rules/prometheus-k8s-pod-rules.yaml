@@ -8,14 +8,25 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: K8S kube_pod_info
+  - name: KubePodCrashLooping
     rules:
-    - alert: Has pod down
+    - alert: KubePodCrashLooping
       annotations:
-        detail:  "你的集群中有pod出现down,请管理员尽快处理，所运行在namespace: {{$labels.namespace}},instance:{{$labels.instance}}, pod_name：{{$labels.pod}}, (当前值: {{ $value }})"
-        summary: "k8s cluster has pod is down."
+        detail:  'Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container}}) is restarting {{ printf "%.2f" $value }} times / 5 minutes.'
+        summary: "POD五分钟内发生重启次数"
       expr: |
-        kube_pod_info == 0
-      for: 1m
+        rate(kube_pod_container_status_restarts_total{job="kube-state-metrics"}[15m]) * 60 * 5 > 0
+      for: 1h
+      labels:
+        severity: 严重
+  - name: KubePodNotReadyMonitoring
+    rules:
+    - alert: KubePodNotReady
+      annotations:
+        detail:  "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been in a non-ready state for longer than an hour."
+        summary: "POD状态异常，或者没有准备，在一小时内"
+      expr: |
+        sum by (namespace, pod) (kube_pod_status_phase{job="kube-state-metrics", phase=~"Pending|Unknown"}) > 0
+      for: 1h
       labels:
         severity: 严重

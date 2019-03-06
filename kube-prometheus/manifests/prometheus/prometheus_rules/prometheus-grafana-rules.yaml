@@ -8,9 +8,9 @@ metadata:
   namespace: monitoring
 spec:
   groups:
-  - name: Grafana监控
+  - name: KubeGrafanaMonitoring
     rules:
-    - alert: K8S Grafana Down
+    - alert: KubeGrafanaDown 
       annotations:
         detail:  "你的监控展示平台Down掉了，请确认信息，IP：{{$labels.instance}}, POD：{{$labels.pod}}，(当前值: {{ $value }})"
         summary: "{{$labels.instance}}: Kubelet Down"

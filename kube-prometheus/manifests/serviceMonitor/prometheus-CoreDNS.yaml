@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: kube-system
+  name: coredns
+  labels:
+    k8s-app: kube-dns
+spec:
+  selector:
+    component: kube-dns
+  ports:
+  - name: kube-dns
+    port: 53
+    targetPort: 53
+    protocol: TCP
