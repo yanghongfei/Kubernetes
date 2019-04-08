@@ -2542,5 +2542,4 @@ https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/ipvs/README.md
 
 Kubernetes二进制部署参考文档：https://github.com/yanghongfei/Kubernetes/tree/master/kubernetes-Binary，仅供参考，K8S版本迭代太快，这个二进制V1.6版本已经无法再完整部署起来了。
 
-
-
+#哇哈哈哈-test
